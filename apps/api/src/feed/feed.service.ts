@@ -1,9 +1,12 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ExplainerService } from './explainer.service.js';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
+const TRENDING_WINDOW_DAYS = 7;
+const TRENDING_LIMIT = 6;
 
 function parseDateOrThrow(value: string, paramName: string): Date {
   const date = new Date(value);
@@ -20,23 +23,69 @@ export class FeedService {
     private readonly explainer: ExplainerService,
   ) {}
 
-  async getFeed(before?: string, limit?: string) {
+  async getFeed(before?: string, limit?: string, source?: string) {
     const take = limit ? Math.min(Math.max(parseInt(limit, 10) || DEFAULT_LIMIT, 1), MAX_LIMIT) : DEFAULT_LIMIT;
 
     return this.prisma.post.findMany({
-      where: before ? { publishedAt: { lt: parseDateOrThrow(before, 'before') } } : undefined,
+      where: {
+        ...(before ? { publishedAt: { lt: parseDateOrThrow(before, 'before') } } : {}),
+        ...(source ? { source } : {}),
+      },
       orderBy: { publishedAt: 'desc' },
       take,
     });
   }
 
-  async getByDate(date: string) {
+  async getByDate(date: string, source?: string) {
     const start = parseDateOrThrow(`${date}T00:00:00.000Z`, 'date');
     const end = parseDateOrThrow(`${date}T23:59:59.999Z`, 'date');
 
     return this.prisma.post.findMany({
-      where: { publishedAt: { gte: start, lte: end } },
+      where: {
+        publishedAt: { gte: start, lte: end },
+        ...(source ? { source } : {}),
+      },
       orderBy: { publishedAt: 'desc' },
+    });
+  }
+
+  async search(q: string, before?: string, limit?: string, source?: string) {
+    const take = limit ? Math.min(Math.max(parseInt(limit, 10) || DEFAULT_LIMIT, 1), MAX_LIMIT) : DEFAULT_LIMIT;
+
+    return this.prisma.post.findMany({
+      where: {
+        ...(before ? { publishedAt: { lt: parseDateOrThrow(before, 'before') } } : {}),
+        ...(source ? { source } : {}),
+        OR: [
+          { title: { contains: q, mode: Prisma.QueryMode.insensitive } },
+          { summary: { contains: q, mode: Prisma.QueryMode.insensitive } },
+        ],
+      },
+      orderBy: { publishedAt: 'desc' },
+      take,
+    });
+  }
+
+  async getSources(): Promise<string[]> {
+    const rows = await this.prisma.post.findMany({
+      distinct: ['source'],
+      select: { source: true },
+      orderBy: { source: 'asc' },
+    });
+    return rows.map((r) => r.source);
+  }
+
+  /** Lightweight "trending" -- this week's MAJOR-flagged posts (already the
+   * signal we compute at ingestion time), newest first. Not a real topic
+   * clustering system -- see docs/research/topic-of-the-week.md for what a
+   * fuller version would take. */
+  async getTrending() {
+    const since = new Date(Date.now() - TRENDING_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+    return this.prisma.post.findMany({
+      where: { isMajor: true, publishedAt: { gte: since } },
+      orderBy: { publishedAt: 'desc' },
+      take: TRENDING_LIMIT,
+      select: { id: true, title: true, source: true, publishedAt: true },
     });
   }
 

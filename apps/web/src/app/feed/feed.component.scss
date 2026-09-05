@@ -23,6 +23,34 @@
   }
 }
 
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-xs;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: t.$font-mono;
+  font-size: 11px;
+  background: t.$ink;
+  color: t.$acid;
+  border-radius: t.$radius;
+  padding: 4px 8px;
+
+  button {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+}
+
 .breaking-banner {
   background: t.$ink;
   color: t.$acid;
@@ -141,7 +169,6 @@
 
   &.short {
     width: 45%;
-    margin-bottom: 0;
   }
 }
 

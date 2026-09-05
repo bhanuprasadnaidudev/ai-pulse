@@ -24,18 +24,43 @@ export interface PostDetailResult {
   cached: boolean;
 }
 
+export interface TrendingPost {
+  id: string;
+  title: string;
+  source: string;
+  publishedAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FeedService {
   constructor(private http: HttpClient) {}
 
-  getFeed(before?: string, limit = 20): Observable<FeedPost[]> {
+  getFeed(before?: string, limit = 20, source?: string | null): Observable<FeedPost[]> {
     let params = new HttpParams().set('limit', limit);
     if (before) params = params.set('before', before);
+    if (source) params = params.set('source', source);
     return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
   }
 
-  getByDate(date: string): Observable<FeedPost[]> {
-    return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params: { date } });
+  getByDate(date: string, source?: string | null): Observable<FeedPost[]> {
+    let params = new HttpParams().set('date', date);
+    if (source) params = params.set('source', source);
+    return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
+  }
+
+  search(q: string, before?: string, limit = 20, source?: string | null): Observable<FeedPost[]> {
+    let params = new HttpParams().set('q', q).set('limit', limit);
+    if (before) params = params.set('before', before);
+    if (source) params = params.set('source', source);
+    return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
+  }
+
+  getSources(): Observable<string[]> {
+    return this.http.get<string[]>(`${API_BASE_URL}/feed/sources`);
+  }
+
+  getTrending(): Observable<TrendingPost[]> {
+    return this.http.get<TrendingPost[]>(`${API_BASE_URL}/feed/trending`);
   }
 
   hasUpdates(since: string): Observable<HasUpdatesResult> {

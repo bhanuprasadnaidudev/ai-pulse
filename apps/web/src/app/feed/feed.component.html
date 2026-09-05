@@ -1,23 +1,50 @@
 <div class="feed">
+  <app-feed-filters
+    [sources]="sources()"
+    [trending]="trending()"
+    [activeSource]="activeSource()"
+    [activeDate]="activeDate()"
+    (sourceChange)="onSourceChange($event)"
+    (dateChange)="onDateChange($event)"
+    (search)="onSearch($event)"
+  />
+
+  @if (activeSource() || activeDate() || activeQuery()) {
+    <div class="active-filters">
+      @if (activeQuery()) {
+        <span class="filter-pill">Search: "{{ activeQuery() }}" <button (click)="clearSearch()">✕</button></span>
+      }
+      @if (activeDate()) {
+        <span class="filter-pill">{{ activeDate() }} <button (click)="clearDate()">✕</button></span>
+      }
+      @if (activeSource()) {
+        <span class="filter-pill">{{ activeSource() }} <button (click)="clearSource()">✕</button></span>
+      }
+    </div>
+  }
+
   @if (hasBreaking()) {
     <div class="breaking-banner" (click)="refresh()">● New breaking update — tap to refresh</div>
   }
 
   @if (loading()) {
     <div class="card-grid">
-      @for (i of skeletonPlaceholders; track i) {
+      @for (card of skeletonCards; track $index) {
         <div class="skeleton-card">
           <div class="skeleton-line short"></div>
           <div class="skeleton-line title"></div>
-          <div class="skeleton-line"></div>
-          <div class="skeleton-line"></div>
+          <div class="skeleton-line title" style="width: 65%"></div>
+          @for (line of card.bodyLines; track line) {
+            <div class="skeleton-line"></div>
+          }
+          <div class="skeleton-line short" style="margin-top: 8px; width: 30%"></div>
         </div>
       }
     </div>
   } @else if (errorMsg()) {
     <div class="state-msg error">{{ errorMsg() }}</div>
   } @else if (posts().length === 0) {
-    <div class="state-msg">No posts yet.</div>
+    <div class="state-msg">No posts match this filter.</div>
   } @else {
     <div class="card-grid">
       @for (post of posts(); track post.id) {
@@ -39,11 +66,14 @@
       }
 
       @if (loadingMore()) {
-        @for (i of skeletonPlaceholders; track i) {
+        @for (card of skeletonCards.slice(0, 3); track $index) {
           <div class="skeleton-card">
             <div class="skeleton-line short"></div>
             <div class="skeleton-line title"></div>
-            <div class="skeleton-line"></div>
+            <div class="skeleton-line title" style="width: 65%"></div>
+            @for (line of card.bodyLines; track line) {
+              <div class="skeleton-line"></div>
+            }
           </div>
         }
       }

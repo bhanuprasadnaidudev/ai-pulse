@@ -11,14 +11,31 @@ export class FeedController {
     return this.feed.hasUpdates(since);
   }
 
+  @Get('sources')
+  getSources() {
+    return this.feed.getSources();
+  }
+
+  @Get('trending')
+  getTrending() {
+    return this.feed.getTrending();
+  }
+
   @Get(':id/detail')
   getDetail(@Param('id') id: string) {
     return this.feed.getDetail(id);
   }
 
   @Get()
-  getFeed(@Query('before') before?: string, @Query('date') date?: string, @Query('limit') limit?: string) {
-    if (date) return this.feed.getByDate(date);
-    return this.feed.getFeed(before, limit);
+  getFeed(
+    @Query('before') before?: string,
+    @Query('date') date?: string,
+    @Query('limit') limit?: string,
+    @Query('source') source?: string,
+    @Query('q') q?: string,
+  ) {
+    if (q) return this.feed.search(q, before, limit, source);
+    if (date) return this.feed.getByDate(date, source);
+    return this.feed.getFeed(before, limit, source);
   }
 }

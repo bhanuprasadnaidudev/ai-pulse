@@ -19,18 +19,26 @@ describe('App', () => {
     httpMock.verify();
   });
 
+  /** FeedComponent's ngOnInit fires three requests: the feed itself, the
+   * source-filter list, and trending suggestions. */
+  function flushFeedRequests() {
+    httpMock.expectOne((req) => req.url.endsWith('/feed')).flush([]);
+    httpMock.expectOne((req) => req.url.endsWith('/feed/sources')).flush([]);
+    httpMock.expectOne((req) => req.url.endsWith('/feed/trending')).flush([]);
+  }
+
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
-    httpMock.expectOne((req) => req.url.endsWith('/feed')).flush([]);
+    flushFeedRequests();
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    httpMock.expectOne((req) => req.url.endsWith('/feed')).flush([]);
+    flushFeedRequests();
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('AI');

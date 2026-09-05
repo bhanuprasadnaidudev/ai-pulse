@@ -1,0 +1,137 @@
+@use '../../shared/styles/tokens' as t;
+
+.filters-bar {
+  display: flex;
+  align-items: flex-start;
+  gap: t.$space-sm;
+  flex-wrap: wrap;
+}
+
+.search-toggle {
+  border: t.$border;
+  border-radius: t.$radius;
+  background: t.$card-bg;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 t.$ink;
+  }
+
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+}
+
+.source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-xs;
+  flex: 1;
+}
+
+.chip {
+  font-family: t.$font-mono;
+  font-size: 11px;
+  text-transform: uppercase;
+  border: t.$border;
+  border-radius: t.$radius;
+  background: t.$card-bg;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 t.$ink;
+  }
+
+  &.active {
+    background: t.$ink;
+    color: t.$acid;
+  }
+}
+
+.date-input {
+  font-family: t.$font-mono;
+  font-size: 12px;
+  border: t.$border;
+  border-radius: t.$radius;
+  padding: 6px 10px;
+  background: t.$card-bg;
+}
+
+.search-panel {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-sm;
+}
+
+.search-input {
+  font-family: t.$font-body;
+  font-size: 14px;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow-sm;
+  padding: 8px 12px;
+  width: 100%;
+}
+
+.trending {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trending-label {
+  font-family: t.$font-mono;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: t.$text-muted;
+}
+
+.trending-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: t.$space-xs;
+}
+
+.trending-chip {
+  font-family: t.$font-body;
+  font-size: 12px;
+  text-align: left;
+  border: t.$border;
+  border-radius: t.$radius;
+  background: t.$acid;
+  color: t.$ink;
+  padding: 6px 10px;
+  cursor: pointer;
+  max-width: 260px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 t.$ink;
+  }
+}

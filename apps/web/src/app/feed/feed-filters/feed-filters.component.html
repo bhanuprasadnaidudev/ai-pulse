@@ -1,0 +1,57 @@
+<div class="filters-bar">
+  <button
+    class="search-toggle"
+    (click)="toggleSearch()"
+    [attr.aria-label]="searchOpen() ? 'Close search' : 'Open search'"
+  >
+    @if (!searchOpen()) {
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+    } @else {
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </svg>
+    }
+  </button>
+
+  @if (searchOpen()) {
+    <div class="search-panel">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Search AI Pulse — press Enter"
+        [(ngModel)]="searchText"
+        (keydown)="onSearchKeydown($event)"
+        #searchBox
+      />
+
+      @if (trending.length > 0) {
+        <div class="trending">
+          <span class="trending-label">🔥 Trending this week</span>
+          <div class="trending-chips">
+            @for (item of trending; track item.id) {
+              <button class="trending-chip" (click)="pickTrending(item)">{{ item.title }}</button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="source-chips">
+      <button class="chip" [class.active]="activeSource === null" (click)="selectSource(null)">All</button>
+      @for (s of sources; track s) {
+        <button class="chip" [class.active]="activeSource === s" (click)="selectSource(s)">{{ s }}</button>
+      }
+    </div>
+
+    <input
+      type="date"
+      class="date-input"
+      [value]="activeDate ?? ''"
+      (change)="onDateInput($any($event.target).value)"
+      aria-label="Jump to date"
+    />
+  }
+</div>
