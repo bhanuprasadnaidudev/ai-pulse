@@ -4,7 +4,16 @@
   }
 
   @if (loading()) {
-    <div class="state-msg">Loading feed…</div>
+    <div class="card-grid">
+      @for (i of skeletonPlaceholders; track i) {
+        <div class="skeleton-card">
+          <div class="skeleton-line short"></div>
+          <div class="skeleton-line title"></div>
+          <div class="skeleton-line"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      }
+    </div>
   } @else if (errorMsg()) {
     <div class="state-msg error">{{ errorMsg() }}</div>
   } @else if (posts().length === 0) {
@@ -12,7 +21,11 @@
   } @else {
     <div class="card-grid">
       @for (post of posts(); track post.id) {
-        <ui-card class="post-card" [class.major]="post.id === topMajorPostId()" [tilt]="post.id === topMajorPostId() ? -1 : null">
+        <ui-card
+          class="post-card"
+          [class.major]="post.id === topMajorPostId()"
+          [tilt]="post.id === topMajorPostId() ? -1 : null"
+        >
           <div class="card-tags">
             <ui-badge>{{ post.source }} // {{ post.publishedAt | date: 'MMM d, h:mm a' }}</ui-badge>
             @if (post.id === topMajorPostId()) {
@@ -24,11 +37,28 @@
           <button class="read-more" (click)="openDetail(post)">Read more</button>
         </ui-card>
       }
+
+      @if (loadingMore()) {
+        @for (i of skeletonPlaceholders; track i) {
+          <div class="skeleton-card">
+            <div class="skeleton-line short"></div>
+            <div class="skeleton-line title"></div>
+            <div class="skeleton-line"></div>
+          </div>
+        }
+      }
     </div>
 
-    <ui-button variant="ink" [disabled]="loadingMore()" (pressed)="loadMore()">
-      {{ loadingMore() ? 'Loading…' : 'Load older posts' }}
-    </ui-button>
+    @if (loadMoreError()) {
+      <div class="pagination-error">
+        {{ loadMoreError() }}
+        <button (click)="loadMore()">Retry</button>
+      </div>
+    } @else if (allLoaded()) {
+      <div class="end-of-feed">— you're all caught up —</div>
+    }
+
+    <div #sentinel class="scroll-sentinel"></div>
   }
 </div>
 

@@ -6,11 +6,21 @@
   gap: t.$space-md;
 }
 
+// CSS multi-column masonry: cards pack tightly regardless of height, so a
+// short card is immediately followed by the next one instead of leaving a
+// grid-row-height gap. Trade-off: fill order is column-first, not strict
+// left-to-right -- an intentional pick over adding a JS masonry dependency.
 .card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: t.$space-md;
-  align-items: start;
+  column-count: 1;
+  column-gap: t.$space-md;
+
+  @media (min-width: 700px) {
+    column-count: 2;
+  }
+
+  @media (min-width: 1100px) {
+    column-count: 3;
+  }
 }
 
 .breaking-banner {
@@ -25,6 +35,12 @@
   text-transform: uppercase;
   transform: rotate(-1deg);
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: rotate(-1deg) translate(-2px, -2px);
+    box-shadow: 9px 9px 0 t.$ink;
+  }
 }
 
 .state-msg {
@@ -39,6 +55,9 @@
 
 .post-card {
   display: block;
+  width: 100%;
+  break-inside: avoid;
+  margin-bottom: t.$space-md;
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
@@ -48,10 +67,8 @@
     box-shadow: 8px 8px 0 t.$ink;
   }
 
-  &.major {
-    &:hover {
-      transform: rotate(-1deg) translate(-2px, -2px);
-    }
+  &.major:hover {
+    transform: rotate(-1deg) translate(-2px, -2px);
   }
 
   .card-tags {
@@ -90,5 +107,89 @@
     padding: 0;
     cursor: pointer;
     text-decoration: underline;
+    transition: color 0.15s ease, opacity 0.15s ease;
+
+    &:hover {
+      color: t.$acid;
+      -webkit-text-stroke: 0.4px t.$ink; // keep it legible against the light card bg
+    }
+  }
+}
+
+.skeleton-card {
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow-sm;
+  padding: 16px;
+  break-inside: avoid;
+  margin-bottom: t.$space-md;
+}
+
+.skeleton-line {
+  height: 12px;
+  border-radius: 2px;
+  margin-bottom: 8px;
+  background: linear-gradient(90deg, #ececE6 25%, #f7f7f3 50%, #ececE6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+
+  &.title {
+    height: 16px;
+    width: 85%;
+  }
+
+  &.short {
+    width: 45%;
+    margin-bottom: 0;
+  }
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.scroll-sentinel {
+  height: 1px;
+}
+
+.end-of-feed {
+  text-align: center;
+  font-family: t.$font-mono;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: t.$text-muted;
+  padding: t.$space-lg 0;
+}
+
+.pagination-error {
+  text-align: center;
+  font-family: t.$font-mono;
+  font-size: 12px;
+  color: t.$ink;
+  padding: t.$space-md 0;
+
+  button {
+    margin-left: 6px;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    cursor: pointer;
+    color: t.$ink;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: t.$acid;
+      -webkit-text-stroke: 0.4px t.$ink;
+    }
   }
 }

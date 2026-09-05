@@ -9,6 +9,14 @@
   box-shadow: t.$shadow;
   transform: rotate(-6deg);
   cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.ui-fab:hover {
+  transform: rotate(-6deg) translate(-2px, -2px);
+  box-shadow: 9px 9px 0 t.$ink;
 }
 
 .ui-fab:active {

@@ -10,6 +10,9 @@
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .ui-btn.ink {
@@ -22,7 +25,12 @@
   color: t.$ink;
 }
 
-.ui-btn:active {
+.ui-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 t.$ink;
+}
+
+.ui-btn:active:not(:disabled) {
   transform: translate(3px, 3px);
   box-shadow: none;
 }
@@ -30,9 +38,4 @@
 .ui-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.ui-btn:disabled:active {
-  transform: none;
-  box-shadow: t.$shadow;
 }

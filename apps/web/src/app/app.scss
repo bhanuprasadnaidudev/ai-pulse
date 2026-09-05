@@ -2,6 +2,7 @@
 
 $sidebar-width: 220px;
 $sidebar-width-collapsed: 72px;
+$anim: 0.2s ease;
 
 .shell {
   min-height: 100dvh;
@@ -18,7 +19,7 @@ $sidebar-width-collapsed: 72px;
   display: flex;
   flex-direction: column;
   gap: t.$space-lg;
-  transition: width 0.2s ease;
+  transition: width $anim;
   overflow: hidden;
 
   &.collapsed {
@@ -39,11 +40,30 @@ $sidebar-width-collapsed: 72px;
   margin: 0;
   font-size: 20px;
   white-space: nowrap;
+  overflow: hidden;
+}
 
-  .accent {
-    background: t.$acid;
-    padding: 0 6px;
-  }
+// Always in the DOM -- collapsing animates opacity/width instead of the
+// component tree adding/removing nodes, which is what made the collapse
+// feel abrupt rather than smooth.
+.logo-full {
+  display: inline-block;
+  background: t.$acid;
+  padding: 0 6px;
+  opacity: 1;
+  max-width: 100px;
+  transition:
+    opacity $anim,
+    max-width $anim,
+    padding $anim,
+    margin $anim;
+}
+
+.sidebar.collapsed .logo-full {
+  opacity: 0;
+  max-width: 0;
+  padding-inline: 0;
+  margin: 0;
 }
 
 .collapse-toggle {
@@ -53,12 +73,29 @@ $sidebar-width-collapsed: 72px;
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  font-family: t.$font-mono;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 t.$ink;
+  }
+
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
 }
 
-.collapse-toggle:active {
-  transform: translate(1px, 1px);
+.toggle-icon {
+  transition: transform $anim;
+
+  &.flipped {
+    transform: rotate(180deg);
+  }
 }
 
 .nav-list {
@@ -68,7 +105,27 @@ $sidebar-width-collapsed: 72px;
 }
 
 .nav-icon {
-  font-size: 16px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-label {
+  display: inline-block;
+  opacity: 1;
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition:
+    opacity $anim,
+    max-width $anim,
+    margin $anim;
+}
+
+.sidebar.collapsed .nav-label {
+  opacity: 0;
+  max-width: 0;
+  margin: 0;
 }
 
 .content {

@@ -1,44 +1,58 @@
 <div class="shell">
   <aside class="sidebar" [class.collapsed]="collapsed()">
     <div class="sidebar-header">
-      @if (!collapsed()) {
-        <h1 class="logo">AI <span class="accent">PULSE</span></h1>
-      } @else {
-        <h1 class="logo"><span class="accent">AI</span></h1>
-      }
+      <h1 class="logo">
+        AI <span class="accent logo-full">PULSE</span>
+      </h1>
       <button
         class="collapse-toggle"
         (click)="toggleSidebar()"
         [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
       >
-        {{ collapsed() ? '»' : '«' }}
+        <svg
+          class="toggle-icon"
+          [class.flipped]="collapsed()"
+          viewBox="0 0 24 24"
+          width="14"
+          height="14"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
       </button>
     </div>
 
     <nav class="nav-list">
       <ui-nav-item layout="row" [active]="true">
-        <span class="nav-icon">🏠</span>
-        @if (!collapsed()) {
-          <span>Feed</span>
-        }
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 11.5 12 4l9 7.5" />
+          <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+        </svg>
+        <span class="nav-label">Feed</span>
       </ui-nav-item>
       <ui-nav-item layout="row" [disabled]="true">
-        <span class="nav-icon">📖</span>
-        @if (!collapsed()) {
-          <span>Learn</span>
-        }
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 5.5C4 4.7 4.7 4 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z" />
+          <path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z" />
+        </svg>
+        <span class="nav-label">Learn</span>
       </ui-nav-item>
       <ui-nav-item layout="row" [disabled]="true">
-        <span class="nav-icon">⚡</span>
-        @if (!collapsed()) {
-          <span>Agents</span>
-        }
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2 4 14h6l-1 8 9-12h-6z" />
+        </svg>
+        <span class="nav-label">Agents</span>
       </ui-nav-item>
       <ui-nav-item layout="row" [disabled]="true">
-        <span class="nav-icon">👤</span>
-        @if (!collapsed()) {
-          <span>You</span>
-        }
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
+        </svg>
+        <span class="nav-label">You</span>
       </ui-nav-item>
     </nav>
   </aside>

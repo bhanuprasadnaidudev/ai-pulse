@@ -61,7 +61,7 @@ export class FeedService {
       return { detail: post.detailBreakdown, cached: true };
     }
 
-    const detail = await this.explainer.explain(post.title, post.summary, post.source);
+    const detail = await this.explainer.explain(post.title, post.summary, post.source, post.url);
     await this.prisma.post.update({ where: { id }, data: { detailBreakdown: detail } });
 
     return { detail, cached: false };

@@ -9,6 +9,7 @@
   justify-content: center;
   padding: t.$space-lg;
   z-index: 100;
+  animation: modal-backdrop-in 0.15s ease;
 }
 
 .modal-panel {
@@ -21,6 +22,27 @@
   max-height: 80vh;
   overflow-y: auto;
   padding: t.$space-lg;
+  animation: modal-panel-in 0.2s ease;
+}
+
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .modal-header {
@@ -38,10 +60,19 @@
   height: 26px;
   cursor: pointer;
   font-family: t.$font-mono;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.modal-close:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 t.$ink;
 }
 
 .modal-close:active {
   transform: translate(1px, 1px);
+  box-shadow: none;
 }
 
 h2 {
@@ -74,4 +105,10 @@ h2 {
   font-size: 12px;
   text-transform: uppercase;
   color: t.$ink;
+  transition: color 0.15s ease;
+}
+
+.source-link:hover {
+  color: t.$acid;
+  -webkit-text-stroke: 0.4px t.$ink;
 }

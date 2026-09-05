@@ -20,6 +20,7 @@ export class RssService {
       const feed = await this.parser.parseURL(source.url);
       return feed.items
         .filter((item) => !!item.link)
+        .filter((item) => !source.topicFilter || source.topicFilter.test(item.title ?? ''))
         .map((item) => ({
           source: source.name,
           sourceTier: source.tier,
