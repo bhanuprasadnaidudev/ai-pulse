@@ -1,0 +1,28 @@
+@use '../../styles/tokens' as t;
+
+.ui-btn {
+  font-family: t.$font-head;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ui-btn.ink {
+  background: t.$ink;
+  color: t.$acid;
+}
+
+.ui-btn.acid {
+  background: t.$acid;
+  color: t.$ink;
+}
+
+.ui-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}

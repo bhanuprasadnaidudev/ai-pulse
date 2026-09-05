@@ -1,1 +1,15 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles */
+@use 'app/shared/styles/tokens' as t;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: t.$bg;
+  color: t.$ink;
+  font-family: t.$font-body;
+}
+
+* {
+  box-sizing: border-box;
+}

@@ -1,0 +1,9 @@
+@use '../../styles/tokens' as t;
+
+.ui-card {
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  padding: 16px;
+}

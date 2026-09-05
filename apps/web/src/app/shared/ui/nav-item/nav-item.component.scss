@@ -1,0 +1,19 @@
+@use '../../styles/tokens' as t;
+
+.ui-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: t.$radius;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: t.$ink;
+}
+
+.ui-nav-item.active {
+  background: t.$ink;
+  color: t.$acid;
+}

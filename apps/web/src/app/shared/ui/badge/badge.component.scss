@@ -1,0 +1,9 @@
+@use '../../styles/tokens' as t;
+
+.ui-badge {
+  font-family: t.$font-mono;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: t.$text-muted;
+}

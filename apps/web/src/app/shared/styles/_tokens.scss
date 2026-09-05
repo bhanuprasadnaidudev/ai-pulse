@@ -1,0 +1,22 @@
+// AI Pulse — neo-brutalist minimal design tokens
+// Source of truth: AI Pulse Visual Design Reference PDF
+$ink: #0b0b0b;
+$acid: #d6ff3f;
+$bg: #fafaf7;
+$card-bg: #ffffff;
+$text-body: #444444;
+$text-muted: #999999;
+
+$radius: 3px; // sharp, not rounded
+$border: 2.5px solid $ink;
+$shadow: 6px 6px 0 $ink; // hard offset, no blur
+$shadow-sm: 3px 3px 0 $ink;
+
+$font-head: 'Archivo Black', sans-serif; // bold condensed headline font
+$font-mono: 'IBM Plex Mono', monospace; // source tags, timestamps
+$font-body: 'Arial', sans-serif;
+
+$space-xs: 6px;
+$space-sm: 10px;
+$space-md: 16px;
+$space-lg: 24px;

@@ -1,0 +1,17 @@
+@use '../../styles/tokens' as t;
+
+.ui-fab {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: t.$acid;
+  border: t.$border;
+  box-shadow: t.$shadow;
+  transform: rotate(-6deg);
+  cursor: pointer;
+}
+
+.ui-fab:active {
+  transform: rotate(-6deg) translate(3px, 3px);
+  box-shadow: none;
+}
