@@ -1,0 +1,66 @@
+@use '../shared/styles/tokens' as t;
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-md;
+  max-width: 640px;
+}
+
+.feed-toolbar {
+  display: flex;
+  gap: t.$space-sm;
+  align-items: center;
+}
+
+.date-input {
+  font-family: t.$font-mono;
+  border: t.$border;
+  border-radius: t.$radius;
+  padding: 8px 10px;
+  background: t.$card-bg;
+}
+
+.breaking-banner {
+  background: t.$ink;
+  color: t.$acid;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  padding: 12px 16px;
+  font-family: t.$font-head;
+  font-size: 13px;
+  text-transform: uppercase;
+  transform: rotate(-1deg);
+  cursor: pointer;
+}
+
+.state-msg {
+  font-family: t.$font-mono;
+  color: t.$text-muted;
+  padding: t.$space-md 0;
+
+  &.error {
+    color: t.$ink;
+  }
+}
+
+.post-card {
+  display: block;
+
+  h3 {
+    margin: t.$space-sm 0 t.$space-xs;
+  }
+
+  p {
+    color: t.$text-body;
+    margin: 0 0 t.$space-sm;
+  }
+
+  a {
+    font-family: t.$font-mono;
+    font-size: 12px;
+    color: t.$ink;
+    text-transform: uppercase;
+  }
+}

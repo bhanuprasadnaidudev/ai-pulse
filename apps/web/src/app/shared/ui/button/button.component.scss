@@ -26,3 +26,13 @@
   transform: translate(3px, 3px);
   box-shadow: none;
 }
+
+.ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-btn:disabled:active {
+  transform: none;
+  box-shadow: t.$shadow;
+}

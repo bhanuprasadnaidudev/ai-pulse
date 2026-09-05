@@ -1,32 +1,42 @@
 @use './shared/styles/tokens' as t;
 
-.ds-check {
+.shell {
+  min-height: 100dvh;
   padding: t.$space-lg;
   display: flex;
   flex-direction: column;
   gap: t.$space-lg;
-  min-height: 100dvh;
 }
 
-h1 {
-  font-family: t.$font-head;
-  margin: 0;
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: t.$space-md;
 
-  .accent {
-    background: t.$acid;
-    padding: 0 6px;
+  h1 {
+    font-family: t.$font-head;
+    margin: 0;
+
+    .accent {
+      background: t.$acid;
+      padding: 0 6px;
+    }
   }
 }
 
-.lede {
-  font-family: t.$font-mono;
-  color: t.$text-muted;
-  margin: 0;
+.tabs {
+  display: flex;
+  gap: t.$space-sm;
 }
 
-.row {
-  display: flex;
-  gap: t.$space-md;
-  flex-wrap: wrap;
-  align-items: flex-start;
+.content {
+  flex: 1;
+}
+
+.chat-fab {
+  position: fixed;
+  bottom: t.$space-lg;
+  right: t.$space-lg;
 }

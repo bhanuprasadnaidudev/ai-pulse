@@ -1,39 +1,19 @@
-<!--
-  Phase 0.5 sanity check — throwaway test page confirming the five shared
-  components (Button, Card, Badge, NavItem, FAB) match the neo-brutalist
-  spec before any real feature screen is built on top of them.
--->
-<main class="ds-check">
-  <h1>AI <span class="accent">PULSE</span></h1>
-  <p class="lede">Design system sanity check — {{ title() }}</p>
+<div class="shell">
+  <header class="topbar">
+    <h1>AI <span class="accent">PULSE</span></h1>
+    <nav class="tabs">
+      <ui-nav-item [active]="true">Feed</ui-nav-item>
+      <ui-nav-item>Learn</ui-nav-item>
+      <ui-nav-item>Agents</ui-nav-item>
+      <ui-nav-item>You</ui-nav-item>
+    </nav>
+  </header>
 
-  <section class="row">
-    <ui-button variant="ink">Ink Button</ui-button>
-    <ui-button variant="acid">Acid Button</ui-button>
-  </section>
+  <main class="content">
+    <app-feed />
+  </main>
 
-  <section class="row">
-    <ui-card [tilt]="-1.2" style="display: block; max-width: 360px">
-      <ui-badge>OPENAI // JUST NOW</ui-badge>
-      <h3>New reasoning benchmark results published</h3>
-      <p>Summary explains what changed and why it matters, in plain language.</p>
-    </ui-card>
-
-    <ui-card style="display: block; max-width: 360px">
-      <ui-badge>DEEPMIND // RESEARCH</ui-badge>
-      <h3>Multimodal training update</h3>
-      <p>Short AI-written summary sits here, source linked below.</p>
-    </ui-card>
-  </section>
-
-  <nav class="row">
-    <ui-nav-item [active]="activeTab() === 'feed'">Feed</ui-nav-item>
-    <ui-nav-item [active]="activeTab() === 'learn'">Learn</ui-nav-item>
-    <ui-nav-item [active]="activeTab() === 'agents'">Agents</ui-nav-item>
-    <ui-nav-item [active]="activeTab() === 'you'">You</ui-nav-item>
-  </nav>
-
-  <ui-fab>💬</ui-fab>
-</main>
+  <ui-fab class="chat-fab">💬</ui-fab>
+</div>
 
 <router-outlet />
