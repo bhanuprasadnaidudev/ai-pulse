@@ -1,17 +1,4 @@
 <div class="feed">
-  <div class="feed-toolbar">
-    <input
-      type="date"
-      class="date-input"
-      [(ngModel)]="dateFilter"
-      (change)="jumpToDate(dateFilter)"
-      aria-label="Jump to date"
-    />
-    @if (dateFilter) {
-      <ui-button variant="ink" (pressed)="clearDateFilter()">Back to live</ui-button>
-    }
-  </div>
-
   @if (hasBreaking()) {
     <div class="breaking-banner" (click)="refresh()">● New breaking update — tap to refresh</div>
   }
@@ -21,21 +8,30 @@
   } @else if (errorMsg()) {
     <div class="state-msg error">{{ errorMsg() }}</div>
   } @else if (posts().length === 0) {
-    <div class="state-msg">No posts yet for this range.</div>
+    <div class="state-msg">No posts yet.</div>
   } @else {
-    @for (post of posts(); track post.id) {
-      <ui-card class="post-card">
-        <ui-badge>{{ post.source }} // {{ post.publishedAt | date: 'MMM d, h:mm a' }}</ui-badge>
-        <h3>{{ post.title }}</h3>
-        <p>{{ post.summary }}</p>
-        <a [href]="post.url" target="_blank" rel="noopener">Read source →</a>
-      </ui-card>
-    }
+    <div class="card-grid">
+      @for (post of posts(); track post.id) {
+        <ui-card class="post-card" [class.major]="post.id === topMajorPostId()" [tilt]="post.id === topMajorPostId() ? -1 : null">
+          <div class="card-tags">
+            <ui-badge>{{ post.source }} // {{ post.publishedAt | date: 'MMM d, h:mm a' }}</ui-badge>
+            @if (post.id === topMajorPostId()) {
+              <span class="major-tag">⚡ MAJOR</span>
+            }
+          </div>
+          <h3>{{ post.title }}</h3>
+          <p>{{ post.summary }}</p>
+          <button class="read-more" (click)="openDetail(post)">Read more</button>
+        </ui-card>
+      }
+    </div>
 
-    @if (!dateFilter) {
-      <ui-button variant="ink" [disabled]="loadingMore()" (pressed)="loadMore()">
-        {{ loadingMore() ? 'Loading…' : 'Load older posts' }}
-      </ui-button>
-    }
+    <ui-button variant="ink" [disabled]="loadingMore()" (pressed)="loadMore()">
+      {{ loadingMore() ? 'Loading…' : 'Load older posts' }}
+    </ui-button>
   }
 </div>
+
+@if (selectedPost(); as post) {
+  <app-post-detail-modal [post]="post" (closed)="closeDetail()" />
+}

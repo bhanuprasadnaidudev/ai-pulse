@@ -2,7 +2,6 @@
 
 .ui-nav-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
@@ -13,7 +12,24 @@
   color: t.$ink;
 }
 
+.ui-nav-item.column {
+  flex-direction: column;
+}
+
+.ui-nav-item.row {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 10px;
+  font-size: 11px;
+  padding: 10px 12px;
+}
+
 .ui-nav-item.active {
   background: t.$ink;
   color: t.$acid;
+}
+
+.ui-nav-item.disabled {
+  color: t.$text-muted;
+  pointer-events: none;
 }

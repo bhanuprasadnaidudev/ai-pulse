@@ -1,13 +1,47 @@
 <div class="shell">
-  <header class="topbar">
-    <h1>AI <span class="accent">PULSE</span></h1>
-    <nav class="tabs">
-      <ui-nav-item [active]="true">Feed</ui-nav-item>
-      <ui-nav-item>Learn</ui-nav-item>
-      <ui-nav-item>Agents</ui-nav-item>
-      <ui-nav-item>You</ui-nav-item>
+  <aside class="sidebar" [class.collapsed]="collapsed()">
+    <div class="sidebar-header">
+      @if (!collapsed()) {
+        <h1 class="logo">AI <span class="accent">PULSE</span></h1>
+      } @else {
+        <h1 class="logo"><span class="accent">AI</span></h1>
+      }
+      <button
+        class="collapse-toggle"
+        (click)="toggleSidebar()"
+        [attr.aria-label]="collapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+      >
+        {{ collapsed() ? '»' : '«' }}
+      </button>
+    </div>
+
+    <nav class="nav-list">
+      <ui-nav-item layout="row" [active]="true">
+        <span class="nav-icon">🏠</span>
+        @if (!collapsed()) {
+          <span>Feed</span>
+        }
+      </ui-nav-item>
+      <ui-nav-item layout="row" [disabled]="true">
+        <span class="nav-icon">📖</span>
+        @if (!collapsed()) {
+          <span>Learn</span>
+        }
+      </ui-nav-item>
+      <ui-nav-item layout="row" [disabled]="true">
+        <span class="nav-icon">⚡</span>
+        @if (!collapsed()) {
+          <span>Agents</span>
+        }
+      </ui-nav-item>
+      <ui-nav-item layout="row" [disabled]="true">
+        <span class="nav-icon">👤</span>
+        @if (!collapsed()) {
+          <span>You</span>
+        }
+      </ui-nav-item>
     </nav>
-  </header>
+  </aside>
 
   <main class="content">
     <app-feed />

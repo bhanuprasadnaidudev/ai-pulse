@@ -19,6 +19,11 @@ export interface HasUpdatesResult {
   count: number;
 }
 
+export interface PostDetailResult {
+  detail: string;
+  cached: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FeedService {
   constructor(private http: HttpClient) {}
@@ -35,5 +40,9 @@ export class FeedService {
 
   hasUpdates(since: string): Observable<HasUpdatesResult> {
     return this.http.get<HasUpdatesResult>(`${API_BASE_URL}/feed/has-updates`, { params: { since } });
+  }
+
+  getDetail(id: string): Observable<PostDetailResult> {
+    return this.http.get<PostDetailResult>(`${API_BASE_URL}/feed/${id}/detail`);
   }
 }

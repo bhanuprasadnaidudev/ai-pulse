@@ -1,9 +1,9 @@
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../shared/ui/card/card.component';
 import { BadgeComponent } from '../shared/ui/badge/badge.component';
 import { ButtonComponent } from '../shared/ui/button/button.component';
+import { PostDetailModalComponent } from './post-detail-modal/post-detail-modal.component';
 import { FeedService, FeedPost } from './feed.service';
 
 const POLL_INTERVAL_MS = 3 * 60 * 1000;
@@ -11,7 +11,7 @@ const POLL_INTERVAL_MS = 3 * 60 * 1000;
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardComponent, BadgeComponent, ButtonComponent],
+  imports: [CommonModule, CardComponent, BadgeComponent, ButtonComponent, PostDetailModalComponent],
   templateUrl: './feed.component.html',
   styleUrl: './feed.component.scss',
 })
@@ -21,7 +21,12 @@ export class FeedComponent implements OnInit, OnDestroy {
   loadingMore = signal(false);
   hasBreaking = signal(false);
   errorMsg = signal<string | null>(null);
-  dateFilter = '';
+  selectedPost = signal<FeedPost | null>(null);
+
+  /** Only the single most recent MAJOR post gets the badge + tilt treatment — per
+   * the design spec, tilt/highlight accents should stay rare or it stops reading
+   * as minimal. Posts are already sorted newest-first by the API. */
+  topMajorPostId = computed(() => this.posts().find((p) => p.isMajor)?.id ?? null);
 
   private lastCheck = new Date().toISOString();
   private pollHandle?: ReturnType<typeof setInterval>;
@@ -83,27 +88,11 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.loadInitial();
   }
 
-  jumpToDate(date: string) {
-    if (!date) {
-      this.loadInitial();
-      return;
-    }
-    this.loading.set(true);
-    this.errorMsg.set(null);
-    this.feed.getByDate(date).subscribe({
-      next: (posts) => {
-        this.posts.set(posts);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.errorMsg.set('Could not load posts for that date.');
-      },
-    });
+  openDetail(post: FeedPost) {
+    this.selectedPost.set(post);
   }
 
-  clearDateFilter() {
-    this.dateFilter = '';
-    this.loadInitial();
+  closeDetail() {
+    this.selectedPost.set(null);
   }
 }

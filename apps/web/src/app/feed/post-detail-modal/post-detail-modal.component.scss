@@ -1,0 +1,77 @@
+@use '../../shared/styles/tokens' as t;
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 11, 11, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: t.$space-lg;
+  z-index: 100;
+}
+
+.modal-panel {
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  max-width: 480px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: t.$space-lg;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: t.$space-sm;
+}
+
+.modal-close {
+  border: t.$border;
+  border-radius: t.$radius;
+  background: t.$card-bg;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  font-family: t.$font-mono;
+}
+
+.modal-close:active {
+  transform: translate(1px, 1px);
+}
+
+h2 {
+  font-family: t.$font-head;
+  margin: 0 0 t.$space-md;
+}
+
+.modal-state {
+  font-family: t.$font-mono;
+  color: t.$text-muted;
+
+  &.error {
+    color: t.$ink;
+  }
+}
+
+.breakdown p {
+  color: t.$text-body;
+  margin: 0 0 t.$space-sm;
+
+  strong {
+    color: t.$ink;
+  }
+}
+
+.source-link {
+  display: inline-block;
+  margin-top: t.$space-md;
+  font-family: t.$font-mono;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: t.$ink;
+}

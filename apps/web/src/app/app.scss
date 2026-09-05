@@ -1,38 +1,80 @@
 @use './shared/styles/tokens' as t;
 
+$sidebar-width: 220px;
+$sidebar-width-collapsed: 72px;
+
 .shell {
   min-height: 100dvh;
-  padding: t.$space-lg;
+  display: flex;
+  align-items: stretch;
+}
+
+.sidebar {
+  width: $sidebar-width;
+  flex-shrink: 0;
+  background: t.$card-bg;
+  border-right: t.$border;
+  padding: t.$space-lg t.$space-md;
   display: flex;
   flex-direction: column;
   gap: t.$space-lg;
-}
+  transition: width 0.2s ease;
+  overflow: hidden;
 
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: t.$space-md;
-
-  h1 {
-    font-family: t.$font-head;
-    margin: 0;
-
-    .accent {
-      background: t.$acid;
-      padding: 0 6px;
-    }
+  &.collapsed {
+    width: $sidebar-width-collapsed;
+    padding-inline: t.$space-sm;
   }
 }
 
-.tabs {
+.sidebar-header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: t.$space-sm;
+}
+
+.logo {
+  font-family: t.$font-head;
+  margin: 0;
+  font-size: 20px;
+  white-space: nowrap;
+
+  .accent {
+    background: t.$acid;
+    padding: 0 6px;
+  }
+}
+
+.collapse-toggle {
+  border: t.$border;
+  border-radius: t.$radius;
+  background: t.$card-bg;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  font-family: t.$font-mono;
+  cursor: pointer;
+}
+
+.collapse-toggle:active {
+  transform: translate(1px, 1px);
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-xs;
+}
+
+.nav-icon {
+  font-size: 16px;
 }
 
 .content {
   flex: 1;
+  min-width: 0;
+  padding: t.$space-lg;
 }
 
 .chat-fab {

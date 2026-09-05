@@ -1,0 +1,29 @@
+<div class="modal-backdrop" (click)="close()">
+  <div class="modal-panel" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <ui-badge>{{ post.source }}</ui-badge>
+      <button class="modal-close" (click)="close()" aria-label="Close">✕</button>
+    </div>
+
+    <h2>{{ post.title }}</h2>
+
+    @if (loading()) {
+      <p class="modal-state">Breaking it down…</p>
+    } @else if (error()) {
+      <p class="modal-state error">{{ error() }}</p>
+    } @else {
+      <div class="breakdown">
+        @for (line of parsedLines(); track $index) {
+          <p>
+            @if (line.label) {
+              <strong>{{ line.label }}:</strong>
+            }
+            {{ line.text }}
+          </p>
+        }
+      </div>
+    }
+
+    <a class="source-link" [href]="post.url" target="_blank" rel="noopener">View original source ↗</a>
+  </div>
+</div>
