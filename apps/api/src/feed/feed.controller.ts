@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, Query } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
 import { FeedService } from './feed.service.js';
 
 @Controller('feed')
@@ -9,6 +9,11 @@ export class FeedController {
   hasUpdates(@Query('since') since?: string) {
     if (!since) throw new BadRequestException('since query param is required');
     return this.feed.hasUpdates(since);
+  }
+
+  @Get(':id/detail')
+  getDetail(@Param('id') id: string) {
+    return this.feed.getDetail(id);
   }
 
   @Get()
