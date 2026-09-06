@@ -1,7 +1,8 @@
-import { Component, OnInit, Signal, signal } from '@angular/core';
+import { Component, OnInit, Signal, computed, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, AuthUser } from '../auth.service';
 import { SavedService, SavedPost } from '../../saved/saved.service';
+import { initialsFrom } from '../../shared/initials';
 
 /** Reachable only while signed in -- App's redirect effect sends anyone
  * without a session to /login before this ever mounts, so the "not signed
@@ -16,6 +17,8 @@ import { SavedService, SavedPost } from '../../saved/saved.service';
 })
 export class AccountPageComponent implements OnInit {
   currentUser: Signal<AuthUser | null>;
+  /** Avatar fallback for an account with no Google picture. */
+  initials: Signal<string>;
   savedPosts = signal<SavedPost[]>([]);
   savedLoading = signal(true);
 
@@ -25,6 +28,7 @@ export class AccountPageComponent implements OnInit {
     private saved: SavedService,
   ) {
     this.currentUser = this.auth.currentUser;
+    this.initials = computed(() => initialsFrom(this.currentUser()?.name));
   }
 
   ngOnInit() {

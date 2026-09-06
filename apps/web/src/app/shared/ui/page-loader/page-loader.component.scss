@@ -7,9 +7,15 @@
   // interaction with the whole app while it's up, so it has to win.
   z-index: 300;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(11, 11, 11, 0.15);
+  gap: t.$space-md;
+  // Near-opaque and theme-aware, not a faint wash: this covers the app
+  // during sign-in and the initial session check, and a half-visible
+  // page behind a spinner reads as broken rather than as loading.
+  background: t.$bg;
+  opacity: 0.97;
 }
 
 .page-loader-spinner {
@@ -20,6 +26,25 @@
   border-top-color: t.$acid;
   border-right-color: t.$ink;
   animation: page-loader-spin 0.7s linear infinite;
+}
+
+.page-loader-label {
+  font-family: t.$font-mono;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: t.$text-muted;
+  animation: page-loader-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes page-loader-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes page-loader-spin {

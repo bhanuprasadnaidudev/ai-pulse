@@ -5,6 +5,7 @@ import { AuthService } from './auth.service.js';
 import { AuthGuard } from './auth.guard.js';
 import { CurrentUser } from './current-user.decorator.js';
 import { RateLimitGuard } from './rate-limit.guard.js';
+import { extractSessionToken } from './session-token.util.js';
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS } from './auth.constants.js';
 
 // Cross-domain by necessity: the API and the web app are two separate
@@ -55,7 +56,11 @@ export class AuthController {
     const token = this.auth.issueSessionToken(user);
 
     res.cookie(SESSION_COOKIE_NAME, token, COOKIE_OPTIONS);
-    return { user: toPublicUser(user) };
+    // The token also comes back in the body so the web app can hold it and
+    // send it as a Bearer header -- the cookie is genuinely third-party in
+    // production and gets dropped by Safari/iOS outright. See
+    // session-token.util.ts.
+    return { user: toPublicUser(user), token };
   }
 
   @Post('signup')
@@ -89,7 +94,7 @@ export class AuthController {
     const token = this.auth.issueSessionToken(user);
 
     res.cookie(SESSION_COOKIE_NAME, token, COOKIE_OPTIONS);
-    return { user: toPublicUser(user) };
+    return { user: toPublicUser(user), token };
   }
 
   /** A real browser navigation from a clicked email link, not an XHR --
@@ -144,7 +149,7 @@ export class AuthController {
 
   @Get('me')
   async me(@Req() req: Request) {
-    const token = req.cookies?.[SESSION_COOKIE_NAME];
+    const token = extractSessionToken(req);
     if (!token) throw new UnauthorizedException();
 
     try {

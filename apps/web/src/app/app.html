@@ -1,5 +1,5 @@
 @if (!authChecked()) {
-  <ui-page-loader />
+  <ui-page-loader label="Checking your session" />
 } @else if (hideShell()) {
   <router-outlet />
 } @else if (readyForShell()) {
@@ -133,20 +133,10 @@
 
       <a routerLink="/account" class="bottom-link">
         <ui-nav-item layout="row" [active]="isAccountRoute()">
-          @if (currentUser(); as user) {
-            @if (user.picture) {
-              <img class="nav-avatar" [src]="user.picture" [alt]="user.name" />
-            } @else {
-              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
-              </svg>
-            }
+          @if (currentUser()?.picture; as picture) {
+            <img class="nav-avatar" [src]="picture" [alt]="currentUser()!.name" />
           } @else {
-            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
-            </svg>
+            <span class="nav-avatar nav-avatar--initials" aria-hidden="true">{{ accountInitials() }}</span>
           }
           <span class="nav-label">{{ currentUser()?.name ?? 'Account' }}</span>
         </ui-nav-item>
@@ -171,9 +161,9 @@
   <ui-fab class="chat-fab">💬</ui-fab>
 </div>
 } @else {
-  <ui-page-loader />
+  <ui-page-loader label="Taking you to sign in" />
 }
 
 @if (authBusy()) {
-  <ui-page-loader />
+  <ui-page-loader label="Signing you in" />
 }

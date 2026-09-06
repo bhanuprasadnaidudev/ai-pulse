@@ -8,6 +8,7 @@ import { PageLoaderComponent } from './shared/ui/page-loader/page-loader.compone
 import { FeedComponent } from './feed/feed.component';
 import { FeedLayoutService, FeedLayout } from './feed/feed-layout.service';
 import { ThemeService, Theme } from './shared/theme.service';
+import { initialsFrom } from './shared/initials';
 import { AuthService, AuthUser } from './auth/auth.service';
 import { AccountPageComponent } from './auth/account-page/account-page.component';
 
@@ -68,6 +69,9 @@ export class App implements OnInit {
    * the feed/account page flashes before the redirect effect below sends
    * an unauthenticated visitor to /login. */
   readyForShell: Signal<boolean>;
+  /** Avatar fallback for an account with no Google picture -- which is
+   * every email/password signup, and plenty of Google accounts too. */
+  accountInitials: Signal<string>;
 
   /** The feed's layout picker, the theme toggle, and the signed-in user all
    * live in the sidebar (AppComponent) rather than inside FeedComponent's
@@ -116,6 +120,8 @@ export class App implements OnInit {
     this.readyForShell = computed(
       () => this.authChecked() && !!this.currentUser() && !this.currentUser()!.needsPassword,
     );
+
+    this.accountInitials = computed(() => initialsFrom(this.currentUser()?.name));
 
     // The whole app requires being signed in -- this is the single place
     // that decides where any given combination of (session state, current

@@ -10,6 +10,15 @@
   font-weight: 700;
   text-transform: uppercase;
   color: t.$ink;
+  // These rows are the actual click targets for the layout picker, theme
+  // toggle and account link -- they're plain divs, so nothing gave them a
+  // pointer cursor and they didn't read as clickable at all.
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: rgba(t.$acid, 0.18);
+  }
 }
 
 .ui-nav-item.column {
@@ -27,9 +36,14 @@
 .ui-nav-item.active {
   background: t.$ink-fixed;
   color: t.$acid;
+
+  &:hover {
+    background: t.$ink-fixed; // already the emphasis state -- don't wash it out
+  }
 }
 
 .ui-nav-item.disabled {
   color: t.$text-muted;
+  cursor: default;
   pointer-events: none;
 }

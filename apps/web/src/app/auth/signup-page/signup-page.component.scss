@@ -71,19 +71,35 @@ form {
   letter-spacing: 0.4px;
   color: t.$text-muted;
 
+  // Neon-on-black in both themes -- see login-page.component.scss for why
+  // both sides are pinned (invisible text in dark mode, plus autofill).
   input {
-    font-family: t.$font-body;
+    font-family: t.$font-mono;
     font-size: 14px;
     text-transform: none;
     letter-spacing: normal;
-    color: t.$ink;
+    background: t.$ink-fixed;
+    color: t.$acid;
+    caret-color: t.$acid;
     border: t.$border;
     border-radius: t.$radius;
     padding: 10px 12px;
 
+    &::placeholder {
+      color: rgba(t.$acid, 0.45);
+    }
+
     &:focus {
       outline: none;
       box-shadow: t.$shadow-sm;
+    }
+
+    &:-webkit-autofill,
+    &:-webkit-autofill:hover,
+    &:-webkit-autofill:focus {
+      -webkit-text-fill-color: t.$acid;
+      caret-color: t.$acid;
+      -webkit-box-shadow: 0 0 0 1000px t.$ink-fixed inset;
     }
   }
 }

@@ -39,6 +39,7 @@
   border: t.$border;
   border-radius: t.$radius;
   background: t.$card-bg;
+  color: t.$ink; // the SVG inside draws with stroke="currentColor"
   width: 34px;
   height: 34px;
   flex-shrink: 0;
@@ -91,6 +92,8 @@
   border-radius: t.$radius;
   padding: 6px 10px;
   background: t.$card-bg;
+  color: t.$ink;
+  cursor: pointer;
 }
 
 // Both flyouts lift off the page instead of pushing the feed down: they're
@@ -192,6 +195,12 @@
   box-shadow: t.$shadow-sm;
   padding: 8px 12px;
   width: 100%;
+  background: t.$card-bg;
+  color: t.$ink;
+
+  &::placeholder {
+    color: t.$text-muted;
+  }
 }
 
 .trending {

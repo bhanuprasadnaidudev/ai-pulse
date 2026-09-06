@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, tap, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { clearStoredToken, storeToken } from './token-storage';
 import type { GoogleCredentialResponse } from './google-identity.d.ts';
 
 // Neither of these calls has a server-side operation slow enough to
@@ -93,10 +94,15 @@ export class AuthService {
     this.authenticating.set(true);
     this.authError.set(null);
     this.http
-      .post<{ user: AuthUser }>(`${AUTH_BASE}/google`, { credential: response.credential }, { withCredentials: true })
+      .post<{ user: AuthUser; token: string }>(
+        `${AUTH_BASE}/google`,
+        { credential: response.credential },
+        { withCredentials: true },
+      )
       .pipe(timeout(GOOGLE_SIGNIN_TIMEOUT_MS))
       .subscribe({
         next: (res) => {
+          storeToken(res.token);
           this.currentUser.set(res.user);
           this.authChecked.set(true);
           this.authenticating.set(false);
@@ -128,10 +134,15 @@ export class AuthService {
     );
   }
 
-  login(email: string, password: string): Observable<{ user: AuthUser }> {
+  login(email: string, password: string): Observable<{ user: AuthUser; token: string }> {
     return this.http
-      .post<{ user: AuthUser }>(`${AUTH_BASE}/login`, { email, password }, { withCredentials: true })
-      .pipe(tap((res) => this.currentUser.set(res.user)));
+      .post<{ user: AuthUser; token: string }>(`${AUTH_BASE}/login`, { email, password }, { withCredentials: true })
+      .pipe(
+        tap((res) => {
+          storeToken(res.token);
+          this.currentUser.set(res.user);
+        }),
+      );
   }
 
   /** The forced "complete your profile" step after a first Google sign-in
@@ -148,6 +159,10 @@ export class AuthService {
   }
 
   logout() {
+    // Dropped before the request goes out, not after it comes back -- the
+    // stored token is what would otherwise keep authenticating requests
+    // even if this call fails or never completes.
+    clearStoredToken();
     this.http.post(`${AUTH_BASE}/logout`, {}, { withCredentials: true }).subscribe({
       next: () => this.currentUser.set(null),
       // Clear the local state either way -- worst case the cookie outlives

@@ -145,6 +145,23 @@ $anim: 0.2s ease;
   object-fit: cover;
 }
 
+// Fallback when the account has no picture (every email/password signup,
+// and plenty of Google accounts) -- an initials badge in the brand accent
+// rather than a generic silhouette.
+.nav-avatar--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: t.$acid;
+  color: t.$ink-fixed;
+  border-color: t.$ink-fixed;
+  font-family: t.$font-mono;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  line-height: 1;
+}
+
 // Pinned to the bottom of the sidebar regardless of how tall the nav list
 // above it is (margin-top: auto in a flex column pushes it to fill the rest
 // of .sidebar's height and sit flush at the bottom edge).

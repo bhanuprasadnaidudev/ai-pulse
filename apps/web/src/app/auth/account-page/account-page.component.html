@@ -9,10 +9,7 @@
         @if (user.picture) {
           <img class="account-avatar" [src]="user.picture" [alt]="user.name" />
         } @else {
-          <svg class="account-avatar account-avatar--fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
-          </svg>
+          <span class="account-avatar account-avatar--initials" aria-hidden="true">{{ initials() }}</span>
         }
         <div class="account-profile-text">
           <span class="account-name">{{ user.name }}</span>

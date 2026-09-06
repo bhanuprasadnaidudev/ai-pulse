@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 /** One consistent, app-wide "something is happening" indicator -- a single
  * minimal spinner centered over the whole page. Exists so an async
@@ -12,8 +12,13 @@ import { Component } from '@angular/core';
   template: `
     <div class="page-loader-backdrop" role="status" aria-live="polite" aria-label="Loading">
       <span class="page-loader-spinner"></span>
+      <span class="page-loader-label">{{ label }}</span>
     </div>
   `,
   styleUrl: './page-loader.component.scss',
 })
-export class PageLoaderComponent {}
+export class PageLoaderComponent {
+  /** Says which wait this is, so a slow sign-in doesn't look identical to
+   * a slow session check. */
+  @Input() label = 'Loading';
+}

@@ -59,10 +59,19 @@
   object-fit: cover;
 }
 
-.account-avatar--fallback {
-  padding: 10px;
-  color: t.$ink;
-  background: t.$bg;
+// Initials badge in the brand accent, rather than a generic silhouette --
+// used whenever the account has no Google picture.
+.account-avatar--initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: t.$acid;
+  color: t.$ink-fixed;
+  font-family: t.$font-mono;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1;
 }
 
 .account-profile-text {
