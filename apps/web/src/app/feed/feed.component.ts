@@ -1,19 +1,19 @@
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable, Subscription } from 'rxjs';
-import { CardComponent } from '../shared/ui/card/card.component';
-import { BadgeComponent } from '../shared/ui/badge/badge.component';
 import { PostDetailModalComponent } from './post-detail-modal/post-detail-modal.component';
 import { FeedFiltersComponent } from './feed-filters/feed-filters.component';
 import { FeedService, FeedPost, TrendingPost } from './feed.service';
 
 const POLL_INTERVAL_MS = 3 * 60 * 1000;
 const PAGE_SIZE = 20;
+const SCROLL_MODE_KEY = 'ai-pulse:feed-scroll-mode';
+type ScrollMode = 'continuous' | 'focus';
 
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [CommonModule, CardComponent, BadgeComponent, PostDetailModalComponent, FeedFiltersComponent],
+  imports: [CommonModule, PostDetailModalComponent, FeedFiltersComponent],
   templateUrl: './feed.component.html',
   styleUrl: './feed.component.scss',
 })
@@ -52,15 +52,44 @@ export class FeedComponent implements OnInit, OnDestroy {
   activeDate = signal<string | null>(null);
   activeQuery = signal<string | null>(null);
 
-  /** Only the single most recent MAJOR post gets the badge + tilt treatment — per
-   * the design spec, tilt/highlight accents should stay rare or it stops reading
-   * as minimal. Posts are already sorted newest-first by the API. */
+  /** Only the single most recent MAJOR post gets the badge treatment — per the
+   * design spec, highlight accents should stay rare or it stops reading as
+   * minimal. Posts are already sorted newest-first by the API. */
   topMajorPostId = computed(() => this.posts().find((p) => p.isMajor)?.id ?? null);
 
   private readonly todayKey = new Date().toDateString();
 
   isToday(publishedAt: string): boolean {
     return new Date(publishedAt).toDateString() === this.todayKey;
+  }
+
+  /** Cheap membership check against the small trending list (top 6, already
+   * loaded) rather than a per-post API flag. */
+  isTrending(id: string): boolean {
+    return this.trending().some((t) => t.id === id);
+  }
+
+  /** User-facing layout preference, not app state -- same reasoning as the
+   * sidebar's collapsed flag: persisted per-browser via localStorage, read
+   * once at construction. "Continuous" is the familiar default; "focus"
+   * snap-scrolls one post at a time, closer to a single-post reading mode. */
+  scrollMode = signal<ScrollMode>(this.loadScrollMode());
+
+  private loadScrollMode(): ScrollMode {
+    try {
+      return localStorage.getItem(SCROLL_MODE_KEY) === 'focus' ? 'focus' : 'continuous';
+    } catch {
+      return 'continuous';
+    }
+  }
+
+  setScrollMode(mode: ScrollMode) {
+    this.scrollMode.set(mode);
+    try {
+      localStorage.setItem(SCROLL_MODE_KEY, mode);
+    } catch {
+      // Private browsing / storage disabled -- the toggle still works for this session.
+    }
   }
 
   private lastCheck = new Date().toISOString();
@@ -82,6 +111,13 @@ export class FeedComponent implements OnInit, OnDestroy {
       });
       this.observer.observe(el.nativeElement);
     });
+
+    // Scroll-snap has to live on the real scrolling element -- the whole
+    // document, since .content has no overflow of its own -- so it's toggled
+    // globally rather than on some wrapper inside this component's template.
+    effect(() => {
+      document.documentElement.classList.toggle('feed-focus-scroll', this.scrollMode() === 'focus');
+    });
   }
 
   ngOnInit() {
@@ -95,6 +131,7 @@ export class FeedComponent implements OnInit, OnDestroy {
     if (this.pollHandle) clearInterval(this.pollHandle);
     this.observer?.disconnect();
     this.fetchSub?.unsubscribe();
+    document.documentElement.classList.remove('feed-focus-scroll');
   }
 
   /** Routes to the right endpoint for whichever filter mode is active.

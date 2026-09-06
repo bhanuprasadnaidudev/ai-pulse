@@ -13,3 +13,17 @@ body {
 * {
   box-sizing: border-box;
 }
+
+// Toggled on <html> by FeedComponent when the user picks "one at a time" —
+// lives here (unscoped) rather than in a component stylesheet because
+// Angular's emulated encapsulation would scope a selector like this to the
+// component's own template and it would never match the real <html> element.
+html.feed-focus-scroll {
+  scroll-snap-type: y mandatory;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.feed-focus-scroll {
+    scroll-behavior: smooth;
+  }
+}

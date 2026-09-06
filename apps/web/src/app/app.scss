@@ -7,12 +7,19 @@ $anim: 0.2s ease;
 .shell {
   min-height: 100dvh;
   display: flex;
-  align-items: stretch;
+  align-items: flex-start; // let the sidebar hold its own height instead of
+  // being stretched to match the (now much taller) single-column feed
 }
 
 .sidebar {
   width: $sidebar-width;
   flex-shrink: 0;
+  // Pinned to the viewport: previously the sidebar was just a flex sibling
+  // with no positioning, so scrolling a long feed scrolled the nav out of
+  // view with it. The feed is the thing meant to move.
+  position: sticky;
+  top: 0;
+  height: 100dvh;
   background: t.$card-bg;
   border-right: t.$border;
   padding: t.$space-lg t.$space-md;

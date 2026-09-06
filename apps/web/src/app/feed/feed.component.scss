@@ -1,26 +1,15 @@
 @use '../shared/styles/tokens' as t;
 
+// Single X-style column instead of the old CSS multi-column masonry: a fixed
+// reading width, centered, so filters/banner/timeline all line up instead of
+// the feed stretching edge-to-edge next to the sidebar.
 .feed {
   display: flex;
   flex-direction: column;
   gap: t.$space-md;
-}
-
-// CSS multi-column masonry: cards pack tightly regardless of height, so a
-// short card is immediately followed by the next one instead of leaving a
-// grid-row-height gap. Trade-off: fill order is column-first, not strict
-// left-to-right -- an intentional pick over adding a JS masonry dependency.
-.card-grid {
-  column-count: 1;
-  column-gap: t.$space-md;
-
-  @media (min-width: 700px) {
-    column-count: 2;
-  }
-
-  @media (min-width: 1100px) {
-    column-count: 3;
-  }
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .active-filters {
@@ -71,6 +60,48 @@
   }
 }
 
+// Binary layout preference -- reads the same visual language as the filter
+// bar's icon buttons (feed-filters.component.scss), just fused into one
+// bordered group since it's a two-way switch, not a menu.
+.scroll-mode-toggle {
+  display: inline-flex;
+  align-self: flex-start;
+  border: t.$border;
+  border-radius: t.$radius;
+  overflow: hidden;
+
+  button {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: t.$card-bg;
+    border: none;
+    color: t.$ink;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+
+    & + button {
+      border-left: t.$border;
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      background: t.$bg;
+    }
+
+    &.active {
+      background: t.$ink;
+      color: t.$acid;
+    }
+  }
+}
+
 .state-msg {
   font-family: t.$font-mono;
   color: t.$text-muted;
@@ -81,29 +112,45 @@
   }
 }
 
+// One column, hairline dividers instead of a per-card shadow box -- a long
+// stack of boxed shadows read as noisy and, at the old grid's card width,
+// cramped. A shared top/bottom rule reads calmer over a long scroll and
+// leaves elevation for the one moment it should mean something: hover.
+.timeline {
+  display: flex;
+  flex-direction: column;
+  border-top: t.$border;
+}
+
 .post-card {
-  display: block;
-  width: 100%;
-  break-inside: avoid;
-  margin-bottom: t.$space-md;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 4px;
+  border-bottom: t.$border;
+  transition: background-color 0.15s ease;
 
   &:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 8px 8px 0 t.$ink;
+    background: rgba(t.$acid, 0.08);
   }
 
-  &.major:hover {
-    transform: rotate(-1deg) translate(-2px, -2px);
+  &.major {
+    background: rgba(t.$acid, 0.05);
   }
 
-  .card-tags {
+  .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: t.$space-sm;
+  }
+
+  .source-name {
+    font-family: t.$font-mono;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
   }
 
   .tag-group {
@@ -135,15 +182,45 @@
   }
 
   h3 {
-    margin: t.$space-sm 0 t.$space-xs;
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.3;
   }
 
   p {
     color: t.$text-body;
-    margin: 0 0 t.$space-sm;
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 2px;
+  }
+
+  .meta-time {
+    font-family: t.$font-mono;
+    font-size: 11px;
+    color: t.$text-muted;
+  }
+
+  .trend-tag {
+    font-family: t.$font-mono;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    background: t.$acid;
+    color: t.$ink;
+    padding: 2px 6px;
+    border-radius: t.$radius;
+    white-space: nowrap;
   }
 
   .read-more {
+    margin-left: auto;
     font-family: t.$font-mono;
     font-size: 12px;
     color: t.$ink;
@@ -153,7 +230,7 @@
     padding: 0;
     cursor: pointer;
     text-decoration: underline;
-    transition: color 0.15s ease, opacity 0.15s ease;
+    transition: color 0.15s ease;
 
     &:hover {
       color: t.$acid;
@@ -162,14 +239,21 @@
   }
 }
 
+// "One at a time": scroll-snap-type itself lives on <html> (see styles.scss)
+// since the document is the real scrolling element here, not .timeline --
+// but the snap targets (scroll-snap-align) can be any descendant, so they're
+// declared directly on the cards.
+.timeline.focus-mode .post-card {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  min-height: calc(100dvh - 110px);
+  justify-content: center;
+}
+
 .skeleton-card {
   background: t.$card-bg;
-  border: t.$border;
-  border-radius: t.$radius;
-  box-shadow: t.$shadow-sm;
-  padding: 16px;
-  break-inside: avoid;
-  margin-bottom: t.$space-md;
+  border-bottom: t.$border;
+  padding: 22px 4px;
 }
 
 .skeleton-line {
