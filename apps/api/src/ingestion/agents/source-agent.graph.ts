@@ -3,7 +3,6 @@ import { Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { RssService, type RawFeedItem } from '../rss.service.js';
 import { DedupeService } from '../dedupe.service.js';
-import { classifyMajor } from '../classify.js';
 import { SummarizeService } from '../summarize.service.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type { FeedSource } from '../sources.js';
@@ -68,8 +67,7 @@ export function buildSourceAgentGraph(
         if (await dedupe.has(item.url)) continue;
 
         try {
-          const isMajor = classifyMajor(item.title, item.sourceTier);
-          const summary = await summarize.summarize(item.title);
+          const { summary, isMajor } = await summarize.summarizeAndClassify(item.title, item.sourceTier);
 
           await prisma.post.create({
             data: {

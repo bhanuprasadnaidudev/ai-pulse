@@ -45,6 +45,39 @@ export class IngestionController {
     return { ok: true, results };
   }
 
+  /** One-off backfill: re-judges MAJOR on already-ingested posts using the
+   * current (content-aware) classifier, for posts ingested under the old
+   * keyword-on-title heuristic. Re-checks every Tier 1 post rather than just
+   * ones currently false, since the old heuristic could also mislabel a
+   * true positive that only coincidentally matched a launch keyword.
+   * Registered before ':source' below -- otherwise that wildcard route would
+   * swallow this literal path and reject it as an unknown source name. */
+  @Post('reclassify')
+  async reclassify(@Headers('authorization') auth: string | undefined) {
+    this.assertAuthorized(auth);
+
+    const posts = await this.prisma.post.findMany({
+      where: { sourceTier: 1 },
+      select: { id: true, title: true, summary: true, sourceTier: true, isMajor: true },
+    });
+
+    let changed = 0;
+    const flips: Array<{ id: string; title: string; from: boolean; to: boolean }> = [];
+
+    for (let i = 0; i < posts.length; i++) {
+      const post = posts[i];
+      const isMajor = await this.summarize.classifyOnly(post.title, post.summary, post.sourceTier);
+      if (isMajor !== post.isMajor) {
+        await this.prisma.post.update({ where: { id: post.id }, data: { isMajor } });
+        flips.push({ id: post.id, title: post.title, from: post.isMajor, to: isMajor });
+        changed++;
+      }
+      if (i < posts.length - 1) await new Promise((r) => setTimeout(r, 4500));
+    }
+
+    return { ok: true, checked: posts.length, changed, flips };
+  }
+
   /** Runs a single named source's agent -- lets you schedule/trigger sources independently. */
   @Post(':source')
   async runOne(

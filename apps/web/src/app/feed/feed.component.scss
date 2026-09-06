@@ -1,8 +1,9 @@
 @use '../shared/styles/tokens' as t;
 
-// Single X-style column instead of the old CSS multi-column masonry: a fixed
-// reading width, centered, so filters/banner/timeline all line up instead of
-// the feed stretching edge-to-edge next to the sidebar.
+// Timeline layouts (continuous/focus) read best at a fixed, centered reading
+// width -- grid wants the opposite, real width to actually show multiple
+// columns -- so the cap widens under .feed--wide (bound to layoutMode() ===
+// 'grid') rather than living as one fixed number.
 .feed {
   display: flex;
   flex-direction: column;
@@ -10,6 +11,10 @@
   max-width: 640px;
   width: 100%;
   margin: 0 auto;
+
+  &.feed--wide {
+    max-width: 1100px;
+  }
 }
 
 .active-filters {
@@ -60,48 +65,6 @@
   }
 }
 
-// Binary layout preference -- reads the same visual language as the filter
-// bar's icon buttons (feed-filters.component.scss), just fused into one
-// bordered group since it's a two-way switch, not a menu.
-.scroll-mode-toggle {
-  display: inline-flex;
-  align-self: flex-start;
-  border: t.$border;
-  border-radius: t.$radius;
-  overflow: hidden;
-
-  button {
-    width: 34px;
-    height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: t.$card-bg;
-    border: none;
-    color: t.$ink;
-    cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
-
-    & + button {
-      border-left: t.$border;
-    }
-
-    svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    &:hover {
-      background: t.$bg;
-    }
-
-    &.active {
-      background: t.$ink;
-      color: t.$acid;
-    }
-  }
-}
-
 .state-msg {
   font-family: t.$font-mono;
   color: t.$text-muted;
@@ -112,20 +75,33 @@
   }
 }
 
-// One column, hairline dividers instead of a per-card shadow box -- a long
-// stack of boxed shadows read as noisy and, at the old grid's card width,
-// cramped. A shared top/bottom rule reads calmer over a long scroll and
-// leaves elevation for the one moment it should mean something: hover.
-.timeline {
+// Two container shapes, one shared card anatomy (header/title/summary/meta):
+// "timeline" (continuous/focus) is one column with hairline dividers between
+// posts -- a long stack of boxed shadows read as noisy and cramped at that
+// width, so a shared top/bottom rule reads calmer and leaves elevation for
+// the one moment it should mean something: hover. "grid" brings back the
+// original multi-column masonry with a boxed, shadowed card per post, which
+// needs the elevation since cards float independently with gaps between.
+.posts.layout-timeline {
   display: flex;
   flex-direction: column;
   border-top: t.$border;
 }
 
-.post-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.posts.layout-grid {
+  column-count: 1;
+  column-gap: t.$space-md;
+
+  @media (min-width: 700px) {
+    column-count: 2;
+  }
+
+  @media (min-width: 1100px) {
+    column-count: 3;
+  }
+}
+
+.layout-timeline .post-card {
   padding: 22px 4px;
   border-bottom: t.$border;
   transition: background-color 0.15s ease;
@@ -137,6 +113,41 @@
   &.major {
     background: rgba(t.$acid, 0.05);
   }
+}
+
+.layout-grid .post-card {
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow-sm;
+  padding: 16px;
+  margin-bottom: t.$space-md;
+  break-inside: avoid;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: t.$shadow;
+  }
+
+  // Tilt reads fine here (unlike the timeline) -- grid cards already float
+  // independently with their own shadow box, so a lone rotated one doesn't
+  // clash against a straight divider line the way it would in one column.
+  &.major {
+    transform: rotate(-1deg);
+
+    &:hover {
+      transform: rotate(-1deg) translate(-2px, -2px);
+    }
+  }
+}
+
+.post-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 
   .card-header {
     display: flex;
@@ -240,20 +251,33 @@
 }
 
 // "One at a time": scroll-snap-type itself lives on <html> (see styles.scss)
-// since the document is the real scrolling element here, not .timeline --
-// but the snap targets (scroll-snap-align) can be any descendant, so they're
-// declared directly on the cards.
-.timeline.focus-mode .post-card {
+// since the document is the real scrolling element here, not .posts -- but
+// the snap targets (scroll-snap-align) can be any descendant, so they're
+// declared directly on the cards. Only reachable in timeline layout (the
+// focus-mode class is only ever applied alongside layout-timeline).
+.posts.focus-mode .post-card {
   scroll-snap-align: start;
   scroll-snap-stop: always;
   min-height: calc(100dvh - 110px);
   justify-content: center;
 }
 
-.skeleton-card {
-  background: t.$card-bg;
+.layout-timeline .skeleton-card {
   border-bottom: t.$border;
   padding: 22px 4px;
+}
+
+.layout-grid .skeleton-card {
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow-sm;
+  padding: 16px;
+  margin-bottom: t.$space-md;
+  break-inside: avoid;
+}
+
+.skeleton-card {
+  background: t.$card-bg;
 }
 
 .skeleton-line {

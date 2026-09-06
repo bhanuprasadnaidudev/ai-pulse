@@ -55,6 +55,50 @@
         <span class="nav-label">You</span>
       </ui-nav-item>
     </nav>
+
+    <div class="sidebar-bottom">
+      <span class="section-label">Layout</span>
+      <div class="layout-switch" role="group" aria-label="Feed layout">
+        <button
+          type="button"
+          [class.active]="layoutMode() === 'grid'"
+          (click)="setLayout('grid')"
+          title="Grid"
+          aria-label="Grid layout"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="3.5" width="7" height="7" rx="1" />
+            <rect x="13.5" y="3.5" width="7" height="7" rx="1" />
+            <rect x="3.5" y="13.5" width="7" height="7" rx="1" />
+            <rect x="13.5" y="13.5" width="7" height="7" rx="1" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          [class.active]="layoutMode() === 'continuous'"
+          (click)="setLayout('continuous')"
+          title="Continuous scroll"
+          aria-label="Continuous scroll layout"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          [class.active]="layoutMode() === 'focus'"
+          (click)="setLayout('focus')"
+          title="One at a time"
+          aria-label="One at a time layout"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="4" width="12" height="16" rx="1" />
+          </svg>
+        </button>
+      </div>
+    </div>
   </aside>
 
   <main class="content">

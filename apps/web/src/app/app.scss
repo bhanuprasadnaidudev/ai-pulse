@@ -135,6 +135,91 @@ $anim: 0.2s ease;
   margin: 0;
 }
 
+// Pinned to the bottom of the sidebar regardless of how tall the nav list
+// above it is (margin-top: auto in a flex column pushes it to fill the rest
+// of .sidebar's height and sit flush at the bottom edge).
+.sidebar-bottom {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-xs;
+  padding-top: t.$space-md;
+  border-top: t.$border;
+}
+
+.section-label {
+  font-family: t.$font-mono;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: t.$text-muted;
+  opacity: 1;
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  transition:
+    opacity $anim,
+    max-width $anim,
+    margin $anim;
+}
+
+.sidebar.collapsed .section-label {
+  opacity: 0;
+  max-width: 0;
+  margin: 0;
+}
+
+.layout-switch {
+  display: flex;
+  gap: t.$space-xs;
+  flex-wrap: wrap;
+}
+
+// Collapsed sidebar is too narrow for three 30px buttons in a row -- stack
+// them instead of relying on wrap, which would split 2-then-1 awkwardly.
+.sidebar.collapsed .layout-switch {
+  flex-direction: column;
+}
+
+.layout-switch button {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: t.$border;
+  border-radius: t.$radius;
+  background: t.$card-bg;
+  color: t.$ink;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  &:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 t.$ink;
+  }
+
+  &:active {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+
+  &.active {
+    background: t.$ink;
+    color: t.$acid;
+  }
+}
+
 .content {
   flex: 1;
   min-width: 0;

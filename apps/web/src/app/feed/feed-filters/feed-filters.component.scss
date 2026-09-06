@@ -1,5 +1,22 @@
 @use '../../shared/styles/tokens' as t;
 
+// Sticky lives on :host, not .filters-bar -- position: sticky is bounded by
+// its element's OWN containing block (in the absence of positioned
+// ancestors, that's just its direct parent's box). .filters-bar's direct
+// parent is the <app-feed-filters> host, which -- without this rule -- is a
+// plain block that shrinks to fit .filters-bar exactly, giving sticky zero
+// room to ever move relative to it (parent height == child height). :host's
+// parent is .feed instead, which spans the whole scrollable page, so sticky
+// actually has somewhere to travel.
+:host {
+  position: sticky;
+  top: 0;
+  z-index: 15; // above .posts cards scrolling underneath; below the flyout panels (z-index: 20)
+  display: block;
+  background: t.$bg;
+  padding-bottom: t.$space-sm;
+}
+
 .filters-bar {
   position: relative; // anchors the flyout panels below
   display: flex;
@@ -80,10 +97,12 @@
 // taken out of normal flow (position: absolute, anchored to .filters-bar)
 // and given the full hard-offset $shadow (not $shadow-sm) so they read as
 // genuinely elevated above the card grid, not just another block on the page.
+// Right-anchored, not left -- the filter button that opens this now sits at
+// the right end of the toolbar.
 .filter-panel {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  right: 0;
   z-index: 20;
   background: t.$card-bg;
   border: t.$border;
@@ -92,12 +111,21 @@
   padding: t.$space-sm;
   width: 260px;
   max-width: calc(100vw - 2 * #{t.$space-lg});
-  max-height: 360px;
+  max-height: 420px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 4px;
   animation: panel-in 0.15s ease;
+
+  .date-input {
+    width: 100%;
+  }
+}
+
+.filter-panel-divider {
+  border-top: 1.5px dashed rgba(t.$ink, 0.2);
+  margin: t.$space-xs 0;
 }
 
 .filter-panel-header {
