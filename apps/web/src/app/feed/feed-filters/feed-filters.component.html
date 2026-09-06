@@ -1,20 +1,61 @@
 <div class="filters-bar">
-  <button
-    class="search-toggle"
-    (click)="toggleSearch()"
-    [attr.aria-label]="searchOpen() ? 'Close search' : 'Open search'"
-  >
-    @if (!searchOpen()) {
+  <div class="toolbar-row">
+    <button
+      class="icon-btn"
+      [class.active]="activeSources.length > 0"
+      (click)="toggleFilterPanel()"
+      [attr.aria-label]="filterPanelOpen() ? 'Close source filter' : 'Filter by source'"
+    >
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m21 21-4.3-4.3" />
+        <path d="M4 5h16l-6.5 7.5V19l-3 1.5v-8z" />
       </svg>
-    } @else {
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 6 6 18M6 6l12 12" />
-      </svg>
-    }
-  </button>
+      @if (activeSources.length > 0) {
+        <span class="count-badge">{{ activeSources.length }}</span>
+      }
+    </button>
+
+    <div class="spacer"></div>
+
+    <button
+      class="icon-btn"
+      (click)="toggleSearch()"
+      [attr.aria-label]="searchOpen() ? 'Close search' : 'Open search'"
+    >
+      @if (!searchOpen()) {
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      }
+    </button>
+
+    <input
+      type="date"
+      class="date-input"
+      [value]="activeDate ?? ''"
+      (change)="onDateInput($any($event.target).value)"
+      aria-label="Jump to date"
+    />
+  </div>
+
+  @if (filterPanelOpen()) {
+    <div class="filter-panel">
+      <div class="filter-panel-header">
+        <span>Sources</span>
+        <button class="text-btn" (click)="clearSources()">Clear</button>
+      </div>
+      @for (s of sources; track s) {
+        <label class="checkbox-row">
+          <input type="checkbox" [checked]="isSourceChecked(s)" (change)="toggleSource(s)" />
+          <span>{{ s }}</span>
+        </label>
+      }
+    </div>
+  }
 
   @if (searchOpen()) {
     <div class="search-panel">
@@ -38,20 +79,5 @@
         </div>
       }
     </div>
-  } @else {
-    <div class="source-chips">
-      <button class="chip" [class.active]="activeSource === null" (click)="selectSource(null)">All</button>
-      @for (s of sources; track s) {
-        <button class="chip" [class.active]="activeSource === s" (click)="selectSource(s)">{{ s }}</button>
-      }
-    </div>
-
-    <input
-      type="date"
-      class="date-input"
-      [value]="activeDate ?? ''"
-      (change)="onDateInput($any($event.target).value)"
-      aria-label="Jump to date"
-    />
   }
 </div>

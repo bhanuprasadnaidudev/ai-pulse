@@ -106,6 +106,12 @@
     gap: t.$space-sm;
   }
 
+  .tag-group {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
   .major-tag {
     font-family: t.$font-mono;
     font-size: 10px;
@@ -114,6 +120,18 @@
     color: t.$ink;
     padding: 2px 6px;
     border-radius: t.$radius;
+    white-space: nowrap;
+  }
+
+  .new-tag {
+    font-family: t.$font-mono;
+    font-size: 10px;
+    font-weight: 700;
+    background: t.$ink;
+    color: t.$acid;
+    padding: 2px 6px;
+    border-radius: t.$radius;
+    white-space: nowrap;
   }
 
   h3 {

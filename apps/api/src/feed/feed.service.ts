@@ -16,6 +16,17 @@ function parseDateOrThrow(value: string, paramName: string): Date {
   return date;
 }
 
+/** `source` is a comma-separated list from the query string -- multi-select
+ * on the frontend's filter checkboxes. */
+function sourceWhere(source?: string): Prisma.PostWhereInput {
+  if (!source) return {};
+  const sources = source
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return sources.length ? { source: { in: sources } } : {};
+}
+
 @Injectable()
 export class FeedService {
   constructor(
@@ -29,7 +40,7 @@ export class FeedService {
     return this.prisma.post.findMany({
       where: {
         ...(before ? { publishedAt: { lt: parseDateOrThrow(before, 'before') } } : {}),
-        ...(source ? { source } : {}),
+        ...sourceWhere(source),
       },
       orderBy: { publishedAt: 'desc' },
       take,
@@ -43,7 +54,7 @@ export class FeedService {
     return this.prisma.post.findMany({
       where: {
         publishedAt: { gte: start, lte: end },
-        ...(source ? { source } : {}),
+        ...sourceWhere(source),
       },
       orderBy: { publishedAt: 'desc' },
     });
@@ -55,7 +66,7 @@ export class FeedService {
     return this.prisma.post.findMany({
       where: {
         ...(before ? { publishedAt: { lt: parseDateOrThrow(before, 'before') } } : {}),
-        ...(source ? { source } : {}),
+        ...sourceWhere(source),
         OR: [
           { title: { contains: q, mode: Prisma.QueryMode.insensitive } },
           { summary: { contains: q, mode: Prisma.QueryMode.insensitive } },

@@ -1,13 +1,24 @@
 @use '../../shared/styles/tokens' as t;
 
 .filters-bar {
+  position: relative; // anchors the flyout panels below
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
   gap: t.$space-sm;
-  flex-wrap: wrap;
 }
 
-.search-toggle {
+.toolbar-row {
+  display: flex;
+  align-items: center;
+  gap: t.$space-sm;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.icon-btn {
+  position: relative;
   border: t.$border;
   border-radius: t.$radius;
   background: t.$card-bg;
@@ -31,39 +42,29 @@
     transform: translate(1px, 1px);
     box-shadow: none;
   }
-}
-
-.source-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: t.$space-xs;
-  flex: 1;
-}
-
-.chip {
-  font-family: t.$font-mono;
-  font-size: 11px;
-  text-transform: uppercase;
-  border: t.$border;
-  border-radius: t.$radius;
-  background: t.$card-bg;
-  padding: 6px 10px;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
-
-  &:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 3px 3px 0 t.$ink;
-  }
 
   &.active {
     background: t.$ink;
     color: t.$acid;
   }
+}
+
+.count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: t.$acid;
+  color: t.$ink;
+  border: t.$border;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  font-family: t.$font-mono;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .date-input {
@@ -75,12 +76,84 @@
   background: t.$card-bg;
 }
 
+// Both flyouts lift off the page instead of pushing the feed down: they're
+// taken out of normal flow (position: absolute, anchored to .filters-bar)
+// and given the full hard-offset $shadow (not $shadow-sm) so they read as
+// genuinely elevated above the card grid, not just another block on the page.
+.filter-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  padding: t.$space-sm;
+  width: 260px;
+  max-width: calc(100vw - 2 * #{t.$space-lg});
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: panel-in 0.15s ease;
+}
+
+.filter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: t.$font-mono;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: t.$text-muted;
+  margin-bottom: 4px;
+}
+
+.text-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: t.$ink;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px 2px;
+  cursor: pointer;
+
+  input {
+    accent-color: t.$ink;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+}
+
 .search-panel {
-  flex: 1;
-  min-width: 240px;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  padding: t.$space-sm;
+  width: 360px;
+  max-width: calc(100vw - 2 * #{t.$space-lg});
   display: flex;
   flex-direction: column;
   gap: t.$space-sm;
+  animation: panel-in 0.15s ease;
 }
 
 .search-input {
@@ -133,5 +206,16 @@
   &:hover {
     transform: translate(-1px, -1px);
     box-shadow: 3px 3px 0 t.$ink;
+  }
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, computed, effect, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { CardComponent } from '../shared/ui/card/card.component';
 import { BadgeComponent } from '../shared/ui/badge/badge.component';
 import { PostDetailModalComponent } from './post-detail-modal/post-detail-modal.component';
@@ -48,7 +48,7 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   sources = signal<string[]>([]);
   trending = signal<TrendingPost[]>([]);
-  activeSource = signal<string | null>(null);
+  activeSources = signal<string[]>([]);
   activeDate = signal<string | null>(null);
   activeQuery = signal<string | null>(null);
 
@@ -57,9 +57,21 @@ export class FeedComponent implements OnInit, OnDestroy {
    * as minimal. Posts are already sorted newest-first by the API. */
   topMajorPostId = computed(() => this.posts().find((p) => p.isMajor)?.id ?? null);
 
+  private readonly todayKey = new Date().toDateString();
+
+  isToday(publishedAt: string): boolean {
+    return new Date(publishedAt).toDateString() === this.todayKey;
+  }
+
   private lastCheck = new Date().toISOString();
   private pollHandle?: ReturnType<typeof setInterval>;
   private observer?: IntersectionObserver;
+  /** Cancels the previous in-flight fetch whenever a new one starts -- without
+   * this, rapid filter changes (two checkboxes ticked in quick succession, a
+   * new search fired before the last one resolved) can have an earlier
+   * request's response land *after* a later one's and silently overwrite the
+   * feed with stale, filter-mismatched results. */
+  private fetchSub?: Subscription;
 
   constructor(private feed: FeedService) {
     effect(() => {
@@ -82,26 +94,28 @@ export class FeedComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.pollHandle) clearInterval(this.pollHandle);
     this.observer?.disconnect();
+    this.fetchSub?.unsubscribe();
   }
 
   /** Routes to the right endpoint for whichever filter mode is active.
    * Search and date-jump are mutually exclusive views; source narrows
    * whichever one is active. */
   private fetchPage(before?: string): Observable<FeedPost[]> {
-    const source = this.activeSource();
+    const sources = this.activeSources();
     const query = this.activeQuery();
     const date = this.activeDate();
 
-    if (query) return this.feed.search(query, before, PAGE_SIZE, source);
-    if (date) return this.feed.getByDate(date, source);
-    return this.feed.getFeed(before, PAGE_SIZE, source);
+    if (query) return this.feed.search(query, before, PAGE_SIZE, sources);
+    if (date) return this.feed.getByDate(date, sources);
+    return this.feed.getFeed(before, PAGE_SIZE, sources);
   }
 
   loadInitial() {
     this.loading.set(true);
     this.errorMsg.set(null);
     this.allLoaded.set(false);
-    this.fetchPage().subscribe({
+    this.fetchSub?.unsubscribe();
+    this.fetchSub = this.fetchPage().subscribe({
       next: (posts) => {
         this.posts.set(posts);
         this.loading.set(false);
@@ -124,7 +138,8 @@ export class FeedComponent implements OnInit, OnDestroy {
 
     this.loadingMore.set(true);
     this.loadMoreError.set(null);
-    this.fetchPage(oldest).subscribe({
+    this.fetchSub?.unsubscribe();
+    this.fetchSub = this.fetchPage(oldest).subscribe({
       next: (more) => {
         this.posts.update((current) => [...current, ...more]);
         this.loadingMore.set(false);
@@ -150,8 +165,20 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.loadInitial();
   }
 
-  onSourceChange(source: string | null) {
-    this.activeSource.set(source);
+  /** Reads and writes this.activeSources() directly (a real signal, not an
+   * @Input() that only refreshes on Angular's next change-detection pass) --
+   * so even two toggles fired back-to-back in the same JS task each see the
+   * other's result, instead of both computing "next" from the same stale
+   * starting array and one silently clobbering the other. */
+  onSourceToggle(source: string) {
+    const current = this.activeSources();
+    const next = current.includes(source) ? current.filter((s) => s !== source) : [...current, source];
+    this.activeSources.set(next);
+    this.resetAndReload();
+  }
+
+  onSourcesCleared() {
+    this.activeSources.set([]);
     this.resetAndReload();
   }
 
@@ -167,8 +194,9 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.resetAndReload();
   }
 
-  clearSource() {
-    this.onSourceChange(null);
+  removeSource(source: string) {
+    this.activeSources.set(this.activeSources().filter((s) => s !== source));
+    this.resetAndReload();
   }
 
   clearDate() {

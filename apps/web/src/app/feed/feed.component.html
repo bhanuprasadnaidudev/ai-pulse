@@ -2,14 +2,15 @@
   <app-feed-filters
     [sources]="sources()"
     [trending]="trending()"
-    [activeSource]="activeSource()"
+    [activeSources]="activeSources()"
     [activeDate]="activeDate()"
-    (sourceChange)="onSourceChange($event)"
+    (sourceToggle)="onSourceToggle($event)"
+    (sourcesCleared)="onSourcesCleared()"
     (dateChange)="onDateChange($event)"
     (search)="onSearch($event)"
   />
 
-  @if (activeSource() || activeDate() || activeQuery()) {
+  @if (activeSources().length > 0 || activeDate() || activeQuery()) {
     <div class="active-filters">
       @if (activeQuery()) {
         <span class="filter-pill">Search: "{{ activeQuery() }}" <button (click)="clearSearch()">✕</button></span>
@@ -17,8 +18,8 @@
       @if (activeDate()) {
         <span class="filter-pill">{{ activeDate() }} <button (click)="clearDate()">✕</button></span>
       }
-      @if (activeSource()) {
-        <span class="filter-pill">{{ activeSource() }} <button (click)="clearSource()">✕</button></span>
+      @for (s of activeSources(); track s) {
+        <span class="filter-pill">{{ s }} <button (click)="removeSource(s)">✕</button></span>
       }
     </div>
   }
@@ -55,9 +56,14 @@
         >
           <div class="card-tags">
             <ui-badge>{{ post.source }} // {{ post.publishedAt | date: 'MMM d, h:mm a' }}</ui-badge>
-            @if (post.id === topMajorPostId()) {
-              <span class="major-tag">⚡ MAJOR</span>
-            }
+            <span class="tag-group">
+              @if (isToday(post.publishedAt)) {
+                <span class="new-tag">NEW</span>
+              }
+              @if (post.id === topMajorPostId()) {
+                <span class="major-tag">⚡ MAJOR</span>
+              }
+            </span>
           </div>
           <h3>{{ post.title }}</h3>
           <p>{{ post.summary }}</p>

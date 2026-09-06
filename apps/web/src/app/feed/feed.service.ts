@@ -35,23 +35,23 @@ export interface TrendingPost {
 export class FeedService {
   constructor(private http: HttpClient) {}
 
-  getFeed(before?: string, limit = 20, source?: string | null): Observable<FeedPost[]> {
+  getFeed(before?: string, limit = 20, sources?: string[]): Observable<FeedPost[]> {
     let params = new HttpParams().set('limit', limit);
     if (before) params = params.set('before', before);
-    if (source) params = params.set('source', source);
+    if (sources?.length) params = params.set('source', sources.join(','));
     return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
   }
 
-  getByDate(date: string, source?: string | null): Observable<FeedPost[]> {
+  getByDate(date: string, sources?: string[]): Observable<FeedPost[]> {
     let params = new HttpParams().set('date', date);
-    if (source) params = params.set('source', source);
+    if (sources?.length) params = params.set('source', sources.join(','));
     return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
   }
 
-  search(q: string, before?: string, limit = 20, source?: string | null): Observable<FeedPost[]> {
+  search(q: string, before?: string, limit = 20, sources?: string[]): Observable<FeedPost[]> {
     let params = new HttpParams().set('q', q).set('limit', limit);
     if (before) params = params.set('before', before);
-    if (source) params = params.set('source', source);
+    if (sources?.length) params = params.set('source', sources.join(','));
     return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
   }
 
