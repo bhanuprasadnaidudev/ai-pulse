@@ -30,18 +30,29 @@ export class AuthService {
 
   /** Verifies a Google Identity Services ID token against Google's public
    * keys and our own client ID (the "audience" check -- without it, a
-   * valid ID token issued to a *different* app would also pass). Throws on
-   * anything wrong: expired, tampered, wrong audience, malformed. */
+   * valid ID token issued to a *different* app would also pass). Anything
+   * wrong -- expired, tampered, wrong audience, malformed, or GOOGLE_CLIENT_ID
+   * itself missing/misconfigured on this server -- is normalized to a clean
+   * UnauthorizedException instead of letting google-auth-library's raw
+   * error (e.g. "Wrong recipient, payload audience != requiredAudience")
+   * bubble up as an uncaught 500. A 500 here used to fail *silently* on the
+   * frontend (the loader just vanished with no message), which is exactly
+   * what "I click the Google button and nothing happens" looks like. */
   async verifyGoogleToken(idToken: string): Promise<TokenPayload> {
-    const ticket = await this.googleClient.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
-    if (!payload?.sub || !payload.email) {
-      throw new UnauthorizedException('Google token missing required claims');
+    try {
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload?.sub || !payload.email) {
+        throw new UnauthorizedException('Google token missing required claims');
+      }
+      return payload;
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
+      throw new UnauthorizedException('Could not verify that Google sign-in. Please try again.');
     }
-    return payload;
   }
 
   /** Looks up by googleId first, then by email -- the second lookup is
@@ -207,6 +218,29 @@ export class AuthService {
     return this.prisma.user.update({
       where: { id: user.id },
       data: { emailVerified: true, verificationToken: null, verificationTokenExpiresAt: null },
+    });
+  }
+
+  /** Called from the forced "complete your profile" step after a Google
+   * sign-in that hasn't set a password yet (see toPublicUser's needsPassword
+   * flag) -- gives that account a password so it can also log in the normal
+   * way later, without touching Google. Also lets them adjust the name
+   * Google supplied, in the same step. Deliberately doesn't require the old
+   * password (there isn't one yet) -- the session cookie already proves
+   * who they are, same trust level AuthGuard grants everywhere else. */
+  async setPassword(userId: string, name: string, password: string): Promise<User> {
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      throw new BadRequestException(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+    }
+    const passwordHash = await this.hashPassword(password);
+    const trimmedName = name?.trim();
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        ...(trimmedName ? { name: trimmedName } : {}),
+      },
     });
   }
 

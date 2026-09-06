@@ -230,8 +230,52 @@
     white-space: nowrap;
   }
 
-  .read-more {
+  // Groups the save button with "Read more" and pushes both to the end of
+  // the row -- moved here from .read-more itself so a second control could
+  // join it without also needing its own margin-left: auto.
+  .meta-actions {
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: t.$text-muted;
+    transition: color 0.15s ease;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      color: t.$ink;
+    }
+
+    // Filled + outlined in the fixed ink (not the theme-flipping one) so
+    // the lime fill stays crisply defined against the card in both themes,
+    // same reasoning as every other acid-paired element (see $ink-fixed).
+    // The stroke has to be set on the <svg> itself -- `stroke="currentColor"`
+    // reads the CSS `color` at that element, not a `stroke` property set on
+    // the ancestor button, so setting `stroke` up here would do nothing.
+    &.saved {
+      color: t.$acid;
+
+      svg {
+        stroke: t.$ink-fixed;
+      }
+    }
+  }
+
+  .read-more {
     font-family: t.$font-mono;
     font-size: 12px;
     color: t.$ink;

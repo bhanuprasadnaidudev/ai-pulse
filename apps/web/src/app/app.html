@@ -1,4 +1,8 @@
-@if (!hideShell()) {
+@if (!authChecked()) {
+  <ui-page-loader />
+} @else if (hideShell()) {
+  <router-outlet />
+} @else if (readyForShell()) {
 <div class="shell">
   <aside class="sidebar" [class.collapsed]="collapsed()">
     <div class="sidebar-header">
@@ -28,7 +32,7 @@
     </div>
 
     <nav class="nav-list">
-      <ui-nav-item layout="row" [active]="true">
+      <ui-nav-item layout="row" [active]="!isAccountRoute()">
         <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 11.5 12 4l9 7.5" />
           <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
@@ -128,7 +132,7 @@
       </ui-nav-item>
 
       <a routerLink="/account" class="bottom-link">
-        <ui-nav-item layout="row">
+        <ui-nav-item layout="row" [active]="isAccountRoute()">
           @if (currentUser(); as user) {
             @if (user.picture) {
               <img class="nav-avatar" [src]="user.picture" [alt]="user.name" />
@@ -151,21 +155,25 @@
   </aside>
 
   <main class="content">
-    @if (justVerified()) {
-      <div class="verified-banner">
-        Email verified — you're all set.
-        <button type="button" (click)="justVerified.set(false)" aria-label="Dismiss">✕</button>
-      </div>
+    @if (isAccountRoute()) {
+      <app-account-page />
+    } @else {
+      @if (justVerified()) {
+        <div class="verified-banner">
+          Email verified — you're all set.
+          <button type="button" (click)="justVerified.set(false)" aria-label="Dismiss">✕</button>
+        </div>
+      }
+      <app-feed />
     }
-    <app-feed />
   </main>
 
   <ui-fab class="chat-fab">💬</ui-fab>
 </div>
+} @else {
+  <ui-page-loader />
 }
 
 @if (authBusy()) {
   <ui-page-loader />
 }
-
-<router-outlet />

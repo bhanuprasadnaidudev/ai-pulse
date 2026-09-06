@@ -21,13 +21,33 @@
       </div>
 
       <button type="button" class="auth-submit" (click)="signOut()">Sign out</button>
+
+      <div class="saved-section">
+        <h3 class="saved-heading">Saved posts</h3>
+        @if (savedLoading()) {
+          <p class="saved-empty">Loading…</p>
+        } @else if (savedPosts().length === 0) {
+          <p class="saved-empty">Nothing saved yet — tap the bookmark icon on any post in the feed.</p>
+        } @else {
+          <ul class="saved-list">
+            @for (post of savedPosts(); track post.id) {
+              <li class="saved-item">
+                <div class="saved-item-text">
+                  <span class="saved-item-source">{{ post.source }}</span>
+                  <a class="saved-item-title" [href]="post.url" target="_blank" rel="noopener">{{ post.title }}</a>
+                </div>
+                <button type="button" class="saved-remove" (click)="unsave(post.id)" aria-label="Remove from saved posts" title="Remove">
+                  ✕
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
       <p class="auth-switch"><a routerLink="/">Back to feed</a></p>
     } @else {
-      <h2 class="auth-title">You're not signed in</h2>
-      <p class="account-empty">Log in or create an account to see your details here.</p>
-      <a routerLink="/login" class="auth-submit account-cta">Log in</a>
-      <p class="auth-switch">Don't have an account? <a routerLink="/signup">Sign up</a></p>
-      <p class="auth-switch"><a routerLink="/">Back to feed</a></p>
+      <p class="account-empty">Redirecting…</p>
     }
   </div>
 </div>

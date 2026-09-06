@@ -1,0 +1,51 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-logo">Current</h1>
+    <h2 class="auth-title">One more step</h2>
+    <p class="auth-intro">
+      You signed in with Google. Set a password so you can also log in with just your email next time.
+    </p>
+
+    @if (errorMessage()) {
+      <div class="auth-error">{{ errorMessage() }}</div>
+    }
+
+    <form (ngSubmit)="submit()" #form="ngForm">
+      <label class="auth-field">
+        <span>Name</span>
+        <input type="text" name="name" [(ngModel)]="name" required autocomplete="name" />
+      </label>
+      <label class="auth-field">
+        <span>Password</span>
+        <input type="password" name="password" [(ngModel)]="password" required autocomplete="new-password" />
+        @if (passwordTooShort) {
+          <span class="auth-hint">At least 8 characters.</span>
+        }
+      </label>
+      <label class="auth-field">
+        <span>Confirm password</span>
+        <input
+          type="password"
+          name="confirmPassword"
+          [(ngModel)]="confirmPassword"
+          required
+          autocomplete="new-password"
+        />
+        @if (passwordsMismatch) {
+          <span class="auth-hint">Passwords don't match.</span>
+        }
+      </label>
+      <button
+        type="submit"
+        class="auth-submit"
+        [disabled]="form.invalid || passwordTooShort || passwordsMismatch || submitting()"
+      >
+        {{ submitting() ? 'Saving...' : 'Save and continue' }}
+      </button>
+    </form>
+
+    <p class="auth-switch">
+      <button type="button" class="auth-inline-link" (click)="signOut()">Sign out instead</button>
+    </p>
+  </div>
+</div>

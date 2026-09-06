@@ -1,14 +1,12 @@
-import { Component, Signal } from '@angular/core';
+import { Component, OnInit, Signal, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, AuthUser } from '../auth.service';
+import { SavedService, SavedPost } from '../../saved/saved.service';
 
-/** A full page (shell hidden, same family as /login and /signup) rather
- * than another sidebar flyout -- the sidebar's account icon just navigates
- * here, matching how the layout icon opens an in-place flyout but the
- * account icon opens a real page with real content and its own "back to
- * feed" link. Doubles as the landing spot for someone who clicks the
- * account icon while signed out, rather than only being reachable once
- * signed in. */
+/** Reachable only while signed in -- App's redirect effect sends anyone
+ * without a session to /login before this ever mounts, so the "not signed
+ * in" branch that used to live here is gone; the @else fallback below is
+ * just a defensive sliver for the instant before that redirect lands. */
 @Component({
   selector: 'app-account-page',
   standalone: true,
@@ -16,14 +14,32 @@ import { AuthService, AuthUser } from '../auth.service';
   templateUrl: './account-page.component.html',
   styleUrl: './account-page.component.scss',
 })
-export class AccountPageComponent {
+export class AccountPageComponent implements OnInit {
   currentUser: Signal<AuthUser | null>;
+  savedPosts = signal<SavedPost[]>([]);
+  savedLoading = signal(true);
 
   constructor(
     private auth: AuthService,
     private router: Router,
+    private saved: SavedService,
   ) {
     this.currentUser = this.auth.currentUser;
+  }
+
+  ngOnInit() {
+    this.saved.list().subscribe({
+      next: (posts) => {
+        this.savedPosts.set(posts);
+        this.savedLoading.set(false);
+      },
+      error: () => this.savedLoading.set(false),
+    });
+  }
+
+  unsave(postId: string) {
+    this.saved.unsave(postId);
+    this.savedPosts.update((posts) => posts.filter((p) => p.id !== postId));
   }
 
   signOut() {

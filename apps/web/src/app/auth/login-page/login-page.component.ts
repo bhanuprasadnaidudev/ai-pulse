@@ -1,4 +1,4 @@
-import { Component, ElementRef, effect, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Signal, effect, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -18,6 +18,9 @@ export class LoginPageComponent {
   errorMessage = signal<string | null>(null);
   submitting = signal(false);
   resendState = signal<'idle' | 'sending' | 'sent'>('idle');
+  /** Surfaces AuthService.authError (a failed Google sign-in) next to the
+   * button -- previously that failure was completely silent. */
+  googleError!: Signal<string | null>;
 
   /** Signal-based query, not @ViewChild + ngAfterViewInit -- same reasoning
    * as everywhere else this pattern shows up in this codebase: the button
@@ -31,6 +34,8 @@ export class LoginPageComponent {
     private router: Router,
     route: ActivatedRoute,
   ) {
+    this.googleError = this.auth.authError;
+
     effect(() => {
       const el = this.googleButtonContainer();
       if (el) this.auth.renderGoogleButton(el.nativeElement);

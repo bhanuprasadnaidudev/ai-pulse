@@ -13,6 +13,10 @@ export const environment = {
   // makes the session cookie look first-party to Safari/iOS instead of a
   // third-party cookie it blocks outright.
   authBaseUrl: 'http://localhost:3000/auth',
+  // Same cross-origin-cookie reasoning as authBaseUrl -- /saved/* also
+  // needs the session cookie attached, so it needs the same first-party
+  // treatment in production.
+  savedBaseUrl: 'http://localhost:3000/saved',
   // Not a secret -- Google's Sign-In client ID is public by design (it
   // identifies the app, same idea as an OAuth "client key"). Needed here
   // too, not just in environment.prod.ts, since `ng serve` runs against

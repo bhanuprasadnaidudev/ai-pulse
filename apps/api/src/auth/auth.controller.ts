@@ -2,6 +2,8 @@ import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, Unau
 import type { Request, Response } from 'express';
 import type { User } from '@prisma/client';
 import { AuthService } from './auth.service.js';
+import { AuthGuard } from './auth.guard.js';
+import { CurrentUser } from './current-user.decorator.js';
 import { RateLimitGuard } from './rate-limit.guard.js';
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS } from './auth.constants.js';
 
@@ -21,7 +23,17 @@ const COOKIE_OPTIONS = {
 };
 
 function toPublicUser(user: User) {
-  return { id: user.id, name: user.name, email: user.email, picture: user.picture };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    picture: user.picture,
+    // True only for a Google-only account that has never set a password --
+    // password-based accounts always have one by definition, so this is
+    // effectively "signed in with Google and hasn't completed setup yet".
+    // The frontend redirects to /complete-profile until this clears.
+    needsPassword: !user.passwordHash,
+  };
 }
 
 // Rate limiting is applied per-method below, not at the class level -- an
@@ -107,6 +119,27 @@ export class AuthController {
     // is already verified, or the email failed to send -- see
     // AuthService.resendVerification's own doc comment.
     return { message: 'If that account exists, a new verification email is on its way.' };
+  }
+
+  /** The forced "complete your profile" step after a first Google sign-in
+   * (see toPublicUser's needsPassword) -- confirms/edits the name Google
+   * supplied and sets a password, so the account can also log in the
+   * normal way afterward. Authenticated via the existing session cookie,
+   * not rate-limited: it requires a valid session already, unlike
+   * signup/login/resend which anyone can hit with guesses. */
+  @Post('set-password')
+  @UseGuards(AuthGuard)
+  async setPassword(
+    @CurrentUser() user: User,
+    @Body('name') name: string,
+    @Body('password') password: string,
+    @Body('confirmPassword') confirmPassword: string,
+  ) {
+    if (password !== confirmPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+    const updated = await this.auth.setPassword(user.id, name, password);
+    return { user: toPublicUser(updated) };
   }
 
   @Get('me')

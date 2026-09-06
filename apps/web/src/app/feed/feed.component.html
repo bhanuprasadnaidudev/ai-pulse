@@ -73,7 +73,22 @@
             @if (isTrending(post.id)) {
               <span class="trend-tag">🔥 Trending</span>
             }
-            <button class="read-more" (click)="openDetail(post)">Read more</button>
+            <span class="meta-actions">
+              <button
+                type="button"
+                class="save-btn"
+                [class.saved]="isSaved(post.id)"
+                (click)="toggleSave(post.id)"
+                [attr.aria-pressed]="isSaved(post.id)"
+                [attr.aria-label]="isSaved(post.id) ? 'Remove from saved posts' : 'Save post'"
+                [title]="isSaved(post.id) ? 'Saved' : 'Save'"
+              >
+                <svg viewBox="0 0 24 24" [attr.fill]="isSaved(post.id) ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 3.5h12a1 1 0 0 1 1 1V21l-7-4-7 4V4.5a1 1 0 0 1 1-1z" />
+                </svg>
+              </button>
+              <button class="read-more" (click)="openDetail(post)">Read more</button>
+            </span>
           </div>
         </article>
       }

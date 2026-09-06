@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnInit, Signal, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, Signal, computed, effect, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -9,12 +9,15 @@ import { FeedComponent } from './feed/feed.component';
 import { FeedLayoutService, FeedLayout } from './feed/feed-layout.service';
 import { ThemeService, Theme } from './shared/theme.service';
 import { AuthService, AuthUser } from './auth/auth.service';
+import { AccountPageComponent } from './auth/account-page/account-page.component';
 
 const SIDEBAR_COLLAPSED_KEY = 'ai-pulse:sidebar-collapsed';
 // Full-page routes that hide the app shell entirely (sidebar + feed) --
-// /account joined /login and /signup here rather than getting a flyout,
-// since "navigate to my account page" is a real page, not a popover.
-const NO_SHELL_ROUTES = ['/login', '/signup', '/account'];
+// rendered through the app's one <router-outlet>. /account is deliberately
+// NOT here: it shows the shell (see app.routes.ts's comment on why it's
+// swapped into .content directly instead of being a routed component).
+const NO_SHELL_ROUTES = ['/login', '/signup', '/complete-profile'];
+const ACCOUNT_ROUTE = '/account';
 
 function readStoredCollapsed(): boolean {
   try {
@@ -24,9 +27,13 @@ function readStoredCollapsed(): boolean {
   }
 }
 
+function currentPath(router: Router): string {
+  return router.url.split('?')[0];
+}
+
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, NavItemComponent, FabComponent, PageLoaderComponent, FeedComponent],
+  imports: [RouterOutlet, RouterLink, NavItemComponent, FabComponent, PageLoaderComponent, FeedComponent, AccountPageComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -43,12 +50,24 @@ export class App implements OnInit {
 
   private layoutWrapper = viewChild<ElementRef<HTMLElement>>('layoutWrapper');
 
-  /** The always-mounted shell (sidebar + feed) hides on the full-page
-   * routes instead of the app conditionally routing between "shell" and
-   * "full page" layouts -- this is the one thing that needs to know which
-   * mode it's in. Properly unmounts FeedComponent while on one of those
-   * routes (no wasted fetch/poll), which a fixed overlay would not do. */
+  /** The always-mounted shell (sidebar + feed/account) hides on the
+   * full-page routes (login/signup/complete-profile) instead of the app
+   * conditionally routing between "shell" and "full page" layouts -- this
+   * is the one thing that needs to know which mode it's in. Properly
+   * unmounts FeedComponent while on one of those routes (no wasted
+   * fetch/poll), which a fixed overlay would not do. */
   hideShell: Signal<boolean>;
+  /** True on /account specifically -- swaps .content's child between
+   * AccountPageComponent and FeedComponent while the shell stays visible
+   * for both (see app.routes.ts for why this isn't router-outlet driven). */
+  isAccountRoute: Signal<boolean>;
+  /** Everything actually needed to safely show the shell: we know whether
+   * there's a session (authChecked), there is one (currentUser), and it
+   * doesn't still need the forced password step. Gating the template on
+   * this (rather than just hideShell) means there's never a frame where
+   * the feed/account page flashes before the redirect effect below sends
+   * an unauthenticated visitor to /login. */
+  readyForShell: Signal<boolean>;
 
   /** The feed's layout picker, the theme toggle, and the signed-in user all
    * live in the sidebar (AppComponent) rather than inside FeedComponent's
@@ -60,6 +79,7 @@ export class App implements OnInit {
   layoutMode!: Signal<FeedLayout>;
   theme!: Signal<Theme>;
   currentUser!: Signal<AuthUser | null>;
+  authChecked!: Signal<boolean>;
   /** True while a Google sign-in is being exchanged for a session --
    * drives the single full-page loader, see AuthService.authenticating. */
   authBusy!: Signal<boolean>;
@@ -74,15 +94,55 @@ export class App implements OnInit {
     this.layoutMode = this.layoutService.mode;
     this.theme = this.themeService.theme;
     this.currentUser = this.authService.currentUser;
+    this.authChecked = this.authService.authChecked;
     this.authBusy = this.authService.authenticating;
 
     this.hideShell = toSignal(
       this.router.events.pipe(
         filter((e) => e instanceof NavigationEnd),
-        map(() => NO_SHELL_ROUTES.includes(this.router.url.split('?')[0])),
+        map(() => NO_SHELL_ROUTES.includes(currentPath(this.router))),
       ),
-      { initialValue: NO_SHELL_ROUTES.includes(this.router.url.split('?')[0]) },
+      { initialValue: NO_SHELL_ROUTES.includes(currentPath(this.router)) },
     );
+
+    this.isAccountRoute = toSignal(
+      this.router.events.pipe(
+        filter((e) => e instanceof NavigationEnd),
+        map(() => currentPath(this.router) === ACCOUNT_ROUTE),
+      ),
+      { initialValue: currentPath(this.router) === ACCOUNT_ROUTE },
+    );
+
+    this.readyForShell = computed(
+      () => this.authChecked() && !!this.currentUser() && !this.currentUser()!.needsPassword,
+    );
+
+    // The whole app requires being signed in -- this is the single place
+    // that decides where any given combination of (session state, current
+    // route) actually belongs, so every entry point (a fresh visit with no
+    // cookie, a successful Google/email sign-in, a still-incomplete Google
+    // signup, an already-signed-in user opening /login directly) converges
+    // on the same rules instead of each page having to know all of them.
+    effect(() => {
+      if (!this.authChecked()) return; // don't redirect on the very first, still-unresolved tick
+      const user = this.currentUser();
+      const path = currentPath(this.router);
+
+      if (!user) {
+        if (path !== '/login' && path !== '/signup') this.router.navigateByUrl('/login');
+        return;
+      }
+      if (user.needsPassword) {
+        if (path !== '/complete-profile') this.router.navigateByUrl('/complete-profile');
+        return;
+      }
+      // Fully signed in -- these three only ever make sense when you
+      // aren't, so bounce back into the app instead of leaving them
+      // reachable (e.g. by typing the URL) once signed in.
+      if (path === '/login' || path === '/signup' || path === '/complete-profile') {
+        this.router.navigateByUrl('/');
+      }
+    });
 
     if (route.snapshot.queryParamMap.get('verified') === '1') {
       this.justVerified.set(true);

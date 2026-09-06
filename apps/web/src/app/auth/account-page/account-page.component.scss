@@ -14,7 +14,9 @@
 
 .auth-card {
   width: 100%;
-  max-width: 360px;
+  // Wider than login/signup's 360px -- this one now also holds the saved
+  // posts list, which needs the room a plain login form doesn't.
+  max-width: 440px;
   background: t.$card-bg;
   border: t.$border;
   box-shadow: t.$shadow;
@@ -116,13 +118,94 @@
   }
 }
 
-// .account-cta reuses .auth-submit's look on an <a> (the signed-out "Log
-// in" call to action) -- needs its own centering/no-underline, which a
-// <button> gets for free from the browser but an anchor doesn't.
-.account-cta {
-  display: block;
-  text-align: center;
+.saved-section {
+  margin-top: t.$space-sm;
+  padding-top: t.$space-md;
+  border-top: t.$border;
+}
+
+.saved-heading {
+  font-family: t.$font-mono;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: t.$text-muted;
+  margin: 0 0 t.$space-sm;
+}
+
+.saved-empty {
+  font-size: 13px;
+  color: t.$text-body;
+  margin: 0;
+}
+
+.saved-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.saved-item {
+  display: flex;
+  align-items: center;
+  gap: t.$space-sm;
+  padding: 8px 0;
+  border-bottom: 1.5px dashed t.$hairline;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.saved-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.saved-item-source {
+  font-family: t.$font-mono;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: t.$text-muted;
+}
+
+.saved-item-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: t.$ink;
   text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.saved-remove {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: t.$text-muted;
+  font-size: 13px;
+  line-height: 1;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: t.$ink;
+  }
 }
 
 .auth-switch {

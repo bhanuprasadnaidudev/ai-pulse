@@ -1,6 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { GoogleCredentialResponse } from './google-identity.d.ts';
@@ -10,6 +9,10 @@ export interface AuthUser {
   name: string;
   email: string;
   picture: string | null;
+  /** True for a Google-only account that has never set a password --
+   * App's redirect effect sends this user to /complete-profile until it
+   * clears, regardless of which page they arrived from. */
+  needsPassword: boolean;
 }
 
 const AUTH_BASE = environment.authBaseUrl;
@@ -17,6 +20,11 @@ const AUTH_BASE = environment.authBaseUrl;
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   currentUser = signal<AuthUser | null>(null);
+  /** False until the initial GET /auth/me (session restore) has resolved,
+   * one way or the other. The whole app is gated on this now -- nothing
+   * (not even the feed) renders before it's true, so there's never a flash
+   * of content that then gets yanked away once we learn there's no session. */
+  authChecked = signal(false);
   /** True while a Google credential is being exchanged for a session --
    * the one gap that used to leave the UI looking inert: picking an
    * account in Google's popup/FedCM UI closes it instantly, but the actual
@@ -26,11 +34,13 @@ export class AuthService {
    * true, from wherever renderGoogleButton's callback fires (login page,
    * signup page, or any future spot). */
   authenticating = signal(false);
+  /** Set when a Google sign-in attempt fails -- previously this failed
+   * completely silently (the loader just vanished), which is exactly what
+   * "I click the button and nothing happens" looks like. Login/signup
+   * pages display this next to the Google button. */
+  authError = signal<string | null>(null);
 
-  constructor(
-    private http: HttpClient,
-    private router: Router,
-  ) {}
+  constructor(private http: HttpClient) {}
 
   /** Called once from AppComponent on startup to restore an existing
    * session (the browser already holds the cookie, if any -- this just
@@ -38,8 +48,14 @@ export class AuthService {
    * "not signed in" case, not an error worth surfacing. */
   init() {
     this.http.get<{ user: AuthUser }>(`${AUTH_BASE}/me`, { withCredentials: true }).subscribe({
-      next: (res) => this.currentUser.set(res.user),
-      error: () => this.currentUser.set(null),
+      next: (res) => {
+        this.currentUser.set(res.user);
+        this.authChecked.set(true);
+      },
+      error: () => {
+        this.currentUser.set(null);
+        this.authChecked.set(true);
+      },
     });
   }
 
@@ -58,24 +74,22 @@ export class AuthService {
 
   private handleCredential(response: GoogleCredentialResponse) {
     this.authenticating.set(true);
+    this.authError.set(null);
     this.http
       .post<{ user: AuthUser }>(`${AUTH_BASE}/google`, { credential: response.credential }, { withCredentials: true })
       .subscribe({
         next: (res) => {
           this.currentUser.set(res.user);
+          this.authChecked.set(true);
           this.authenticating.set(false);
-          // Google sign-in only ever happens from /login or /signup --
-          // without this, a successful sign-in silently left the user
-          // sitting on that same form with no visible sign anything had
-          // happened (the actual bug behind "nothing happens after I pick
-          // an account", not just a missing spinner).
-          this.router.navigateByUrl('/');
+          // No explicit navigate here -- App's redirect effect is the
+          // single place that decides where a signed-in user ends up
+          // (home, or /complete-profile if needsPassword is still true),
+          // and it reacts to currentUser() the instant this signal changes.
         },
-        error: () => {
-          // Verification failed server-side (expired/tampered token, or
-          // the client ID doesn't match) -- nothing to restore, just stay
-          // signed out. The button remains available to try again.
+        error: (err: HttpErrorResponse) => {
           this.authenticating.set(false);
+          this.authError.set(err.error?.message ?? 'Could not sign in with Google. Please try again.');
         },
       });
   }
@@ -95,6 +109,15 @@ export class AuthService {
   login(email: string, password: string): Observable<{ user: AuthUser }> {
     return this.http
       .post<{ user: AuthUser }>(`${AUTH_BASE}/login`, { email, password }, { withCredentials: true })
+      .pipe(tap((res) => this.currentUser.set(res.user)));
+  }
+
+  /** The forced "complete your profile" step after a first Google sign-in
+   * (see AuthUser.needsPassword) -- confirms/edits the name and sets a
+   * password so the account can also log in the normal way afterward. */
+  setPassword(name: string, password: string, confirmPassword: string): Observable<{ user: AuthUser }> {
+    return this.http
+      .post<{ user: AuthUser }>(`${AUTH_BASE}/set-password`, { name, password, confirmPassword }, { withCredentials: true })
       .pipe(tap((res) => this.currentUser.set(res.user)));
   }
 

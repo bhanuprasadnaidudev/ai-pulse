@@ -1,4 +1,4 @@
-import { Component, ElementRef, effect, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Signal, effect, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -27,10 +27,15 @@ export class SignupPageComponent {
    * meaningful to navigate to yet, since the account isn't usable until
    * the link in that email is clicked. */
   submitted = signal(false);
+  /** Surfaces AuthService.authError (a failed Google sign-in) next to the
+   * button -- previously that failure was completely silent. */
+  googleError!: Signal<string | null>;
 
   private googleButtonContainer = viewChild<ElementRef<HTMLElement>>('googleButtonContainer');
 
   constructor(private auth: AuthService) {
+    this.googleError = this.auth.authError;
+
     effect(() => {
       const el = this.googleButtonContainer();
       if (el) this.auth.renderGoogleButton(el.nativeElement);

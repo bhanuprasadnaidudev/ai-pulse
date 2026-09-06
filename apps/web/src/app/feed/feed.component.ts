@@ -5,6 +5,7 @@ import { PostDetailModalComponent } from './post-detail-modal/post-detail-modal.
 import { FeedFiltersComponent } from './feed-filters/feed-filters.component';
 import { FeedLayoutService, FeedLayout } from './feed-layout.service';
 import { FeedService, FeedPost, TrendingPost } from './feed.service';
+import { SavedService } from '../saved/saved.service';
 
 const POLL_INTERVAL_MS = 3 * 60 * 1000;
 const PAGE_SIZE = 20;
@@ -68,6 +69,14 @@ export class FeedComponent implements OnInit, OnDestroy {
     return this.trending().some((t) => t.id === id);
   }
 
+  isSaved(id: string): boolean {
+    return this.saved.isSaved(id);
+  }
+
+  toggleSave(id: string) {
+    this.saved.toggle(id);
+  }
+
   /** Owned by FeedLayoutService, not this component -- the picker that sets
    * it now lives in the sidebar (AppComponent), which isn't a parent/child
    * of this component. Exposed as a plain property so the template can still
@@ -89,6 +98,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   constructor(
     private feed: FeedService,
     private layoutService: FeedLayoutService,
+    private saved: SavedService,
   ) {
     this.layoutMode = this.layoutService.mode;
 
@@ -114,6 +124,9 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.pollHandle = setInterval(() => this.checkForUpdates(), POLL_INTERVAL_MS);
     this.feed.getSources().subscribe({ next: (s) => this.sources.set(s), error: () => {} });
     this.feed.getTrending().subscribe({ next: (t) => this.trending.set(t), error: () => {} });
+    // Safe to always call now -- FeedComponent only ever mounts once the
+    // app-level auth guard has confirmed a signed-in user.
+    this.saved.loadIds();
   }
 
   ngOnDestroy() {
