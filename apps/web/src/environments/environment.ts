@@ -18,5 +18,5 @@ export const environment = {
   // too, not just in environment.prod.ts, since `ng serve` runs against
   // localhost:4200, one of the Authorized JavaScript origins on the OAuth
   // client. REPLACE_ME until the Google Cloud OAuth client exists.
-  googleClientId: 'REPLACE_ME_WITH_REAL_GOOGLE_OAUTH_CLIENT_ID',
+  googleClientId: '217954173206-244ddqiehcv0ldgcm41u3ml01svl6n5u.apps.googleusercontent.com',
 };
