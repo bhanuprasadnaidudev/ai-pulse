@@ -1,8 +1,18 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, timeout } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { GoogleCredentialResponse } from './google-identity.d.ts';
+
+// Neither of these calls has a server-side operation slow enough to
+// justify waiting longer than this -- past it, something is genuinely
+// stuck (a network issue, an unreachable dependency), not just a normal
+// cold start. Without a client-side cap, a hung request left the UI
+// spinning forever with no way out: the initial session check would trap
+// the whole app behind its loader, and a Google sign-in would leave that
+// specific loader running indefinitely with no error ever surfacing.
+const AUTH_CHECK_TIMEOUT_MS = 15_000;
+const GOOGLE_SIGNIN_TIMEOUT_MS = 20_000;
 
 export interface AuthUser {
   id: string;
@@ -47,16 +57,23 @@ export class AuthService {
    * asks the API who, if anyone, it belongs to). A 401 here is the normal
    * "not signed in" case, not an error worth surfacing. */
   init() {
-    this.http.get<{ user: AuthUser }>(`${AUTH_BASE}/me`, { withCredentials: true }).subscribe({
-      next: (res) => {
-        this.currentUser.set(res.user);
-        this.authChecked.set(true);
-      },
-      error: () => {
-        this.currentUser.set(null);
-        this.authChecked.set(true);
-      },
-    });
+    this.http
+      .get<{ user: AuthUser }>(`${AUTH_BASE}/me`, { withCredentials: true })
+      .pipe(timeout(AUTH_CHECK_TIMEOUT_MS))
+      .subscribe({
+        next: (res) => {
+          this.currentUser.set(res.user);
+          this.authChecked.set(true);
+        },
+        // A real 401 (not signed in) and a timeout both land here and are
+        // treated the same way -- signed out. Defaulting to "needs to log
+        // in" rather than leaving authChecked false forever is what keeps
+        // a hung request from trapping the whole app behind its loader.
+        error: () => {
+          this.currentUser.set(null);
+          this.authChecked.set(true);
+        },
+      });
   }
 
   /** Renders the actual Google button into `container`. Google's script
@@ -77,6 +94,7 @@ export class AuthService {
     this.authError.set(null);
     this.http
       .post<{ user: AuthUser }>(`${AUTH_BASE}/google`, { credential: response.credential }, { withCredentials: true })
+      .pipe(timeout(GOOGLE_SIGNIN_TIMEOUT_MS))
       .subscribe({
         next: (res) => {
           this.currentUser.set(res.user);
@@ -87,9 +105,13 @@ export class AuthService {
           // (home, or /complete-profile if needsPassword is still true),
           // and it reacts to currentUser() the instant this signal changes.
         },
-        error: (err: HttpErrorResponse) => {
+        error: (err: HttpErrorResponse | Error) => {
           this.authenticating.set(false);
-          this.authError.set(err.error?.message ?? 'Could not sign in with Google. Please try again.');
+          this.authError.set(
+            err.name === 'TimeoutError'
+              ? 'This is taking too long. Check your connection and try again.'
+              : ((err as HttpErrorResponse).error?.message ?? 'Could not sign in with Google. Please try again.'),
+          );
         },
       });
   }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 import { Prisma, type User } from '@prisma/client';
@@ -9,9 +9,17 @@ import { MailService } from './mail.service.js';
 import { MAX_PASSWORD_BYTES, MIN_PASSWORD_LENGTH, VERIFICATION_TOKEN_EXPIRY_MS } from './auth.constants.js';
 
 const BCRYPT_SALT_ROUNDS = 10;
+// verifyIdToken fetches Google's public certs over the network the first
+// time (or whenever its cache expires) -- google-auth-library doesn't
+// expose a request timeout for that call, so a slow/unreachable network
+// path to Google would otherwise hang this indefinitely, which is exactly
+// what "I pick an account and the spinner just never stops" looks like.
+// Racing it against a plain timeout guarantees this always settles.
+const GOOGLE_VERIFY_TIMEOUT_MS = 10_000;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
   constructor(
@@ -40,10 +48,15 @@ export class AuthService {
    * what "I click the Google button and nothing happens" looks like. */
   async verifyGoogleToken(idToken: string): Promise<TokenPayload> {
     try {
-      const ticket = await this.googleClient.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
+      const ticket = await Promise.race([
+        this.googleClient.verifyIdToken({
+          idToken,
+          audience: process.env.GOOGLE_CLIENT_ID,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Timed out contacting Google')), GOOGLE_VERIFY_TIMEOUT_MS),
+        ),
+      ]);
       const payload = ticket.getPayload();
       if (!payload?.sub || !payload.email) {
         throw new UnauthorizedException('Google token missing required claims');
@@ -51,6 +64,11 @@ export class AuthService {
       return payload;
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
+      // Logged (not swallowed silently) -- the client only ever sees the
+      // generic message below, but this is what makes an actual
+      // misconfiguration (wrong/missing GOOGLE_CLIENT_ID, network issue
+      // reaching Google) visible in Render's logs instead of invisible.
+      this.logger.error(`Google token verification failed: ${err instanceof Error ? err.message : String(err)}`);
       throw new UnauthorizedException('Could not verify that Google sign-in. Please try again.');
     }
   }
