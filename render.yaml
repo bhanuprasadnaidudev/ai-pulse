@@ -1,0 +1,34 @@
+# Render Blueprint for the AI Pulse API.
+# Deploy: Render dashboard -> New -> Blueprint -> select this repo. Render
+# reads this file and creates the service below automatically; you only
+# need to fill in the env vars marked "sync: false" (Render prompts for
+# each one during setup instead of storing the value in this file/repo).
+#
+# Commands run from the repo root, not apps/api directly -- this is an npm
+# workspaces monorepo (root package.json has "workspaces": ["apps/*"]), and
+# running from the root with --workspace lets npm resolve/hoist
+# dependencies exactly the way local dev already does, rather than treating
+# apps/api as an isolated package with its own install.
+services:
+  - type: web
+    name: ai-pulse-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build --workspace=api
+    startCommand: npm run start:prod --workspace=api
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        sync: false # Neon pooled connection string
+      - key: DIRECT_URL
+        sync: false # Neon direct (unpooled) connection string -- migrations only
+      - key: UPSTASH_REDIS_URL
+        sync: false
+      - key: UPSTASH_REDIS_TOKEN
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: INGEST_SECRET
+        sync: false # same value already used for local /ingest calls
+      - key: CORS_ORIGIN
+        sync: false # optional -- leave unset while the web app is still local; defaults to allowing localhost:4200
