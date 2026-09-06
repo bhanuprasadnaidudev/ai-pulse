@@ -135,6 +135,105 @@ $anim: 0.2s ease;
   margin: 0;
 }
 
+.nav-avatar {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid t.$ink;
+  object-fit: cover;
+}
+
+// Positioning context for the flyout below -- same convention as the
+// filter/search flyouts in feed-filters.component.scss (anchor is
+// position: relative, panel is position: absolute, full hard-offset
+// $shadow so it reads as elevated above the page, not just another block).
+.you-wrapper {
+  position: relative;
+}
+
+.you-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  width: 240px;
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  padding: t.$space-sm;
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-sm;
+}
+
+.you-panel-label {
+  font-family: t.$font-mono;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: t.$text-muted;
+}
+
+.you-profile {
+  display: flex;
+  align-items: center;
+  gap: t.$space-sm;
+}
+
+.you-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: t.$border;
+  object-fit: cover;
+}
+
+.you-profile-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.you-name {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.you-email {
+  font-family: t.$font-mono;
+  font-size: 10.5px;
+  color: t.$text-muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.you-signout {
+  font-family: t.$font-mono;
+  font-size: 11px;
+  text-transform: uppercase;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  color: t.$ink;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: t.$acid;
+    -webkit-text-stroke: 0.4px t.$ink;
+  }
+}
+
 // Pinned to the bottom of the sidebar regardless of how tall the nav list
 // above it is (margin-top: auto in a flex column pushes it to fill the rest
 // of .sidebar's height and sit flush at the bottom edge).

@@ -19,12 +19,17 @@ describe('App', () => {
     httpMock.verify();
   });
 
-  /** FeedComponent's ngOnInit fires three requests: the feed itself, the
-   * source-filter list, and trending suggestions. */
+  /** FeedComponent's ngOnInit fires three requests (the feed itself, the
+   * source-filter list, trending suggestions), and App's own ngOnInit fires
+   * a fourth to restore any existing session -- flushed here as a 401
+   * (not logged in), the default/normal case for a fresh test run. */
   function flushFeedRequests() {
     httpMock.expectOne((req) => req.url.endsWith('/feed')).flush([]);
     httpMock.expectOne((req) => req.url.endsWith('/feed/sources')).flush([]);
     httpMock.expectOne((req) => req.url.endsWith('/feed/trending')).flush([]);
+    httpMock
+      .expectOne((req) => req.url.endsWith('/auth/me'))
+      .flush({ message: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
   }
 
   it('should create the app', () => {

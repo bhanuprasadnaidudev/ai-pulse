@@ -28,3 +28,12 @@ model Post {
   @@index([publishedAt])
   @@index([isMajor])
 }
+
+model User {
+  id        String   @id @default(cuid())
+  googleId  String   @unique
+  email     String   @unique
+  name      String
+  picture   String?
+  createdAt DateTime @default(now())
+}

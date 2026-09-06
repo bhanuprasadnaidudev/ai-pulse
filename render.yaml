@@ -32,3 +32,7 @@ services:
         sync: false # same value already used for local /ingest calls
       - key: CORS_ORIGIN
         sync: false # optional -- leave unset while the web app is still local; defaults to allowing localhost:4200
+      - key: JWT_SECRET
+        sync: false # random secret signing our own session cookie -- not the Google client secret (there isn't one, see auth.service.ts)
+      - key: GOOGLE_CLIENT_ID
+        sync: false # from Google Cloud Console -- not secret, but kept as an env var (not hardcoded) so it's one place to rotate

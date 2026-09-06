@@ -47,13 +47,46 @@
         </svg>
         <span class="nav-label">Agents</span>
       </ui-nav-item>
-      <ui-nav-item layout="row" [disabled]="true">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
-        </svg>
-        <span class="nav-label">You</span>
-      </ui-nav-item>
+      <div class="you-wrapper" #youWrapper>
+        <ui-nav-item layout="row" [active]="youPanelOpen()" (click)="toggleYouPanel()">
+          @if (currentUser(); as user) {
+            @if (user.picture) {
+              <img class="nav-avatar" [src]="user.picture" [alt]="user.name" />
+            } @else {
+              <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
+              </svg>
+            }
+          } @else {
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
+            </svg>
+          }
+          <span class="nav-label">{{ currentUser()?.name ?? 'You' }}</span>
+        </ui-nav-item>
+
+        @if (youPanelOpen()) {
+          <div class="you-panel">
+            @if (currentUser(); as user) {
+              <div class="you-profile">
+                @if (user.picture) {
+                  <img class="you-avatar" [src]="user.picture" [alt]="user.name" />
+                }
+                <div class="you-profile-text">
+                  <span class="you-name">{{ user.name }}</span>
+                  <span class="you-email">{{ user.email }}</span>
+                </div>
+              </div>
+              <button class="you-signout" (click)="signOut()">Sign out</button>
+            } @else {
+              <span class="you-panel-label">Sign in to AI Pulse</span>
+              <div #googleButtonContainer></div>
+            }
+          </div>
+        }
+      </div>
     </nav>
 
     <div class="sidebar-bottom">
