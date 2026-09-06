@@ -36,3 +36,9 @@ services:
         sync: false # random secret signing our own session cookie -- not the Google client secret (there isn't one, see auth.service.ts)
       - key: GOOGLE_CLIENT_ID
         sync: false # from Google Cloud Console -- not secret, but kept as an env var (not hardcoded) so it's one place to rotate
+      - key: GMAIL_USER
+        sync: false # a dedicated Gmail address (not a personal one) used only to send verification emails
+      - key: GMAIL_APP_PASSWORD
+        sync: false # that account's App Password (needs 2FA on to generate one) -- not its real login password
+      - key: WEB_APP_URL
+        sync: false # https://ai-pulse-web.onrender.com -- used to build the verification email's link and to redirect back after verifying

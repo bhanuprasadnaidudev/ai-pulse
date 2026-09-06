@@ -30,10 +30,16 @@ model Post {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  googleId  String   @unique
-  email     String   @unique
-  name      String
-  picture   String?
-  createdAt DateTime @default(now())
+  id                         String    @id @default(cuid())
+  // Optional -- a password-only signup never touches Google. Postgres's
+  // unique index permits multiple NULLs, so many such users coexist fine.
+  googleId                   String?   @unique
+  email                      String    @unique
+  passwordHash               String?
+  emailVerified              Boolean   @default(false)
+  verificationToken          String?   @unique
+  verificationTokenExpiresAt DateTime?
+  name                       String
+  picture                    String?
+  createdAt                  DateTime  @default(now())
 }

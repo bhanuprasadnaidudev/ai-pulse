@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { API_BASE_URL } from '../api-config';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { GoogleCredentialResponse } from './google-identity.d.ts';
 
@@ -10,6 +10,8 @@ export interface AuthUser {
   email: string;
   picture: string | null;
 }
+
+const AUTH_BASE = environment.authBaseUrl;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -22,7 +24,7 @@ export class AuthService {
    * asks the API who, if anyone, it belongs to). A 401 here is the normal
    * "not signed in" case, not an error worth surfacing. */
   init() {
-    this.http.get<{ user: AuthUser }>(`${API_BASE_URL}/auth/me`, { withCredentials: true }).subscribe({
+    this.http.get<{ user: AuthUser }>(`${AUTH_BASE}/me`, { withCredentials: true }).subscribe({
       next: (res) => this.currentUser.set(res.user),
       error: () => this.currentUser.set(null),
     });
@@ -43,11 +45,7 @@ export class AuthService {
 
   private handleCredential(response: GoogleCredentialResponse) {
     this.http
-      .post<{ user: AuthUser }>(
-        `${API_BASE_URL}/auth/google`,
-        { credential: response.credential },
-        { withCredentials: true },
-      )
+      .post<{ user: AuthUser }>(`${AUTH_BASE}/google`, { credential: response.credential }, { withCredentials: true })
       .subscribe({
         next: (res) => this.currentUser.set(res.user),
         error: () => {
@@ -58,8 +56,30 @@ export class AuthService {
       });
   }
 
+  /** Returns the Observable (rather than self-subscribing like the Google/
+   * logout flows above) so the signup/login pages can drive their own
+   * loading state and show the specific error message the API sends back
+   * -- a form needs richer feedback than "stay signed out and try again". */
+  signup(name: string, email: string, password: string, confirmPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${AUTH_BASE}/signup`,
+      { name, email, password, confirmPassword },
+      { withCredentials: true },
+    );
+  }
+
+  login(email: string, password: string): Observable<{ user: AuthUser }> {
+    return this.http
+      .post<{ user: AuthUser }>(`${AUTH_BASE}/login`, { email, password }, { withCredentials: true })
+      .pipe(tap((res) => this.currentUser.set(res.user)));
+  }
+
+  resendVerification(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${AUTH_BASE}/resend-verification`, { email }, { withCredentials: true });
+  }
+
   logout() {
-    this.http.post(`${API_BASE_URL}/auth/logout`, {}, { withCredentials: true }).subscribe({
+    this.http.post(`${AUTH_BASE}/logout`, {}, { withCredentials: true }).subscribe({
       next: () => this.currentUser.set(null),
       // Clear the local state either way -- worst case the cookie outlives
       // this call and /auth/me quietly re-establishes it next load, which

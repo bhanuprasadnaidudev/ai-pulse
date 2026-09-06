@@ -1,0 +1,40 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-logo">Current</h1>
+    <h2 class="auth-title">Log in</h2>
+
+    @if (errorMessage()) {
+      <div class="auth-error">
+        {{ errorMessage() }}
+        @if (showResend) {
+          <button type="button" class="auth-inline-link" (click)="resendVerification()" [disabled]="resendState() !== 'idle'">
+            @switch (resendState()) {
+              @case ('sending') { Sending... }
+              @case ('sent') { Sent -- check your inbox }
+              @default { Resend verification email }
+            }
+          </button>
+        }
+      </div>
+    }
+
+    <form (ngSubmit)="submit()" #form="ngForm">
+      <label class="auth-field">
+        <span>Email</span>
+        <input type="email" name="email" [(ngModel)]="email" required autocomplete="email" />
+      </label>
+      <label class="auth-field">
+        <span>Password</span>
+        <input type="password" name="password" [(ngModel)]="password" required autocomplete="current-password" />
+      </label>
+      <button type="submit" class="auth-submit" [disabled]="form.invalid || submitting()">
+        {{ submitting() ? 'Logging in...' : 'Log in' }}
+      </button>
+    </form>
+
+    <div class="auth-divider"><span>or continue with</span></div>
+    <div #googleButtonContainer class="auth-google"></div>
+
+    <p class="auth-switch">Don't have an account? <a routerLink="/signup">Sign up</a></p>
+  </div>
+</div>

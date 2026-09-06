@@ -1,6 +1,8 @@
-import { Body, Controller, Get, Post, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, Query, Req, Res, UnauthorizedException, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
+import type { User } from '@prisma/client';
 import { AuthService } from './auth.service.js';
+import { RateLimitGuard } from './rate-limit.guard.js';
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS } from './auth.constants.js';
 
 // Cross-domain by necessity: the API and the web app are two separate
@@ -18,6 +20,18 @@ const COOKIE_OPTIONS = {
   maxAge: SESSION_MAX_AGE_MS,
 };
 
+function toPublicUser(user: User) {
+  return { id: user.id, name: user.name, email: user.email, picture: user.picture };
+}
+
+// Rate limiting is applied per-method below, not at the class level -- an
+// earlier version of this put @UseGuards(RateLimitGuard) on the whole
+// controller, which meant GET /auth/me (called automatically on every
+// single page load, completely benign and read-only) counted against the
+// same small budget as signup/login attempts. A real user just opening
+// the app a handful of times would get themselves locked out. Only the
+// three genuinely abuse-prone endpoints -- account creation, password
+// guessing, and resend-triggered emails -- actually need it.
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
@@ -29,7 +43,70 @@ export class AuthController {
     const token = this.auth.issueSessionToken(user);
 
     res.cookie(SESSION_COOKIE_NAME, token, COOKIE_OPTIONS);
-    return { user: { id: user.id, name: user.name, email: user.email, picture: user.picture } };
+    return { user: toPublicUser(user) };
+  }
+
+  @Post('signup')
+  @UseGuards(RateLimitGuard)
+  async signup(
+    @Body('name') name: string,
+    @Body('email') email: string,
+    @Body('password') password: string,
+    @Body('confirmPassword') confirmPassword: string,
+  ) {
+    // Request-shape validation lives here; AuthService.signup throws its
+    // own BadRequestException for the domain checks (password length,
+    // email already taken) -- both propagate naturally as proper 400s,
+    // same convention as every other controller in this API
+    // (feed.controller.ts, ingestion.controller.ts).
+    if (password !== confirmPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+    await this.auth.signup(name, email, password);
+    return { message: 'Check your email to verify your account.' };
+  }
+
+  @Post('login')
+  @UseGuards(RateLimitGuard)
+  async login(
+    @Body('email') email: string,
+    @Body('password') password: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const user = await this.auth.login(email, password);
+    const token = this.auth.issueSessionToken(user);
+
+    res.cookie(SESSION_COOKIE_NAME, token, COOKIE_OPTIONS);
+    return { user: toPublicUser(user) };
+  }
+
+  /** A real browser navigation from a clicked email link, not an XHR --
+   * responds with a redirect, not JSON. Plain @Res(), never
+   * { passthrough: true }: mixing passthrough with a manual res.redirect()
+   * throws ERR_HTTP_HEADERS_SENT when Nest also tries to serialize a
+   * return value onto an already-finished response, so nothing here is
+   * ever `return`ed. */
+  @Get('verify')
+  async verify(@Query('token') token: string, @Res() res: Response) {
+    const user = await this.auth.verifyEmailToken(token);
+    if (!user) {
+      res.redirect(302, `${process.env.WEB_APP_URL}/login?error=expired`);
+      return;
+    }
+
+    const sessionToken = this.auth.issueSessionToken(user);
+    res.cookie(SESSION_COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
+    res.redirect(302, `${process.env.WEB_APP_URL}/?verified=1`);
+  }
+
+  @Post('resend-verification')
+  @UseGuards(RateLimitGuard)
+  async resendVerification(@Body('email') email: string) {
+    await this.auth.resendVerification(email);
+    // Always the same response regardless of whether the account exists,
+    // is already verified, or the email failed to send -- see
+    // AuthService.resendVerification's own doc comment.
+    return { message: 'If that account exists, a new verification email is on its way.' };
   }
 
   @Get('me')
@@ -41,7 +118,7 @@ export class AuthController {
       const { sub } = await this.auth.verifySessionToken(token);
       const user = await this.auth.getUserById(sub);
       if (!user) throw new UnauthorizedException();
-      return { user: { id: user.id, name: user.name, email: user.email, picture: user.picture } };
+      return { user: toPublicUser(user) };
     } catch {
       // Expired, tampered, or the secret rotated -- treat identically to
       // "not logged in" rather than a 500.

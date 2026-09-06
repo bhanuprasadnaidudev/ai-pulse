@@ -1,3 +1,4 @@
+@if (!isAuthRoute()) {
 <div class="shell">
   <aside class="sidebar" [class.collapsed]="collapsed()">
     <div class="sidebar-header">
@@ -81,8 +82,8 @@
               </div>
               <button class="you-signout" (click)="signOut()">Sign out</button>
             } @else {
-              <span class="you-panel-label">Sign in to Current</span>
-              <div #googleButtonContainer></div>
+              <a routerLink="/login" class="you-link" (click)="youPanelOpen.set(false)">Log in</a>
+              <a routerLink="/signup" class="you-link" (click)="youPanelOpen.set(false)">Sign up</a>
             }
           </div>
         }
@@ -135,10 +136,17 @@
   </aside>
 
   <main class="content">
+    @if (justVerified()) {
+      <div class="verified-banner">
+        Email verified — you're all set.
+        <button type="button" (click)="justVerified.set(false)" aria-label="Dismiss">✕</button>
+      </div>
+    }
     <app-feed />
   </main>
 
   <ui-fab class="chat-fab">💬</ui-fab>
 </div>
+}
 
 <router-outlet />
