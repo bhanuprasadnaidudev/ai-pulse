@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../environments/environment';
 import type { GoogleCredentialResponse } from './google-identity.d.ts';
@@ -16,8 +17,20 @@ const AUTH_BASE = environment.authBaseUrl;
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   currentUser = signal<AuthUser | null>(null);
+  /** True while a Google credential is being exchanged for a session --
+   * the one gap that used to leave the UI looking inert: picking an
+   * account in Google's popup/FedCM UI closes it instantly, but the actual
+   * POST /auth/google round-trip (plus Render's free-tier cold start) can
+   * take a real few seconds with nothing else on screen changing.
+   * AppComponent shows a single full-page loader for as long as this is
+   * true, from wherever renderGoogleButton's callback fires (login page,
+   * signup page, or any future spot). */
+  authenticating = signal(false);
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+  ) {}
 
   /** Called once from AppComponent on startup to restore an existing
    * session (the browser already holds the cookie, if any -- this just
@@ -44,14 +57,25 @@ export class AuthService {
   }
 
   private handleCredential(response: GoogleCredentialResponse) {
+    this.authenticating.set(true);
     this.http
       .post<{ user: AuthUser }>(`${AUTH_BASE}/google`, { credential: response.credential }, { withCredentials: true })
       .subscribe({
-        next: (res) => this.currentUser.set(res.user),
+        next: (res) => {
+          this.currentUser.set(res.user);
+          this.authenticating.set(false);
+          // Google sign-in only ever happens from /login or /signup --
+          // without this, a successful sign-in silently left the user
+          // sitting on that same form with no visible sign anything had
+          // happened (the actual bug behind "nothing happens after I pick
+          // an account", not just a missing spinner).
+          this.router.navigateByUrl('/');
+        },
         error: () => {
           // Verification failed server-side (expired/tampered token, or
           // the client ID doesn't match) -- nothing to restore, just stay
           // signed out. The button remains available to try again.
+          this.authenticating.set(false);
         },
       });
   }

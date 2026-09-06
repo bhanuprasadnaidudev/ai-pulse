@@ -25,6 +25,7 @@
   font-family: t.$font-head;
   font-size: 20px;
   background: t.$acid;
+  color: t.$ink-fixed;
   display: inline-block;
   padding: 2px 8px;
   align-self: flex-start;
@@ -106,7 +107,7 @@ form {
   text-transform: uppercase;
   letter-spacing: 0.4px;
   font-weight: 700;
-  background: t.$ink;
+  background: t.$ink-fixed;
   color: t.$acid;
   border: t.$border;
   border-radius: t.$radius;

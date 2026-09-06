@@ -1,0 +1,33 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <h1 class="auth-logo">Current</h1>
+
+    @if (currentUser(); as user) {
+      <h2 class="auth-title">Your account</h2>
+
+      <div class="account-profile">
+        @if (user.picture) {
+          <img class="account-avatar" [src]="user.picture" [alt]="user.name" />
+        } @else {
+          <svg class="account-avatar account-avatar--fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" />
+          </svg>
+        }
+        <div class="account-profile-text">
+          <span class="account-name">{{ user.name }}</span>
+          <span class="account-email">{{ user.email }}</span>
+        </div>
+      </div>
+
+      <button type="button" class="auth-submit" (click)="signOut()">Sign out</button>
+      <p class="auth-switch"><a routerLink="/">Back to feed</a></p>
+    } @else {
+      <h2 class="auth-title">You're not signed in</h2>
+      <p class="account-empty">Log in or create an account to see your details here.</p>
+      <a routerLink="/login" class="auth-submit account-cta">Log in</a>
+      <p class="auth-switch">Don't have an account? <a routerLink="/signup">Sign up</a></p>
+      <p class="auth-switch"><a routerLink="/">Back to feed</a></p>
+    }
+  </div>
+</div>

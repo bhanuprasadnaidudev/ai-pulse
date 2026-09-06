@@ -56,6 +56,7 @@ $anim: 0.2s ease;
 .logo-full {
   display: inline-block;
   background: t.$acid;
+  color: t.$ink-fixed;
   padding: 0 6px;
   opacity: 1;
   max-width: 100px;
@@ -144,97 +145,6 @@ $anim: 0.2s ease;
   object-fit: cover;
 }
 
-// Positioning context for the flyout below -- same convention as the
-// filter/search flyouts in feed-filters.component.scss (anchor is
-// position: relative, panel is position: absolute, full hard-offset
-// $shadow so it reads as elevated above the page, not just another block).
-.you-wrapper {
-  position: relative;
-}
-
-.you-panel {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  z-index: 20;
-  width: 240px;
-  background: t.$card-bg;
-  border: t.$border;
-  border-radius: t.$radius;
-  box-shadow: t.$shadow;
-  padding: t.$space-sm;
-  display: flex;
-  flex-direction: column;
-  gap: t.$space-sm;
-}
-
-.you-panel-label {
-  font-family: t.$font-mono;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: t.$text-muted;
-}
-
-.you-profile {
-  display: flex;
-  align-items: center;
-  gap: t.$space-sm;
-}
-
-.you-avatar {
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: t.$border;
-  object-fit: cover;
-}
-
-.you-profile-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.you-name {
-  font-weight: 700;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.you-email {
-  font-family: t.$font-mono;
-  font-size: 10.5px;
-  color: t.$text-muted;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.you-signout,
-.you-link {
-  font-family: t.$font-mono;
-  font-size: 11px;
-  text-transform: uppercase;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 0;
-  color: t.$ink;
-  text-decoration: underline;
-  cursor: pointer;
-  transition: color 0.15s ease;
-
-  &:hover {
-    color: t.$acid;
-    -webkit-text-stroke: 0.4px t.$ink;
-  }
-}
-
 // Pinned to the bottom of the sidebar regardless of how tall the nav list
 // above it is (margin-top: auto in a flex column pushes it to fill the rest
 // of .sidebar's height and sit flush at the bottom edge).
@@ -247,38 +157,51 @@ $anim: 0.2s ease;
   border-top: t.$border;
 }
 
-.section-label {
-  font-family: t.$font-mono;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: t.$text-muted;
-  opacity: 1;
-  max-width: 120px;
-  overflow: hidden;
-  white-space: nowrap;
-  transition:
-    opacity $anim,
-    max-width $anim,
-    margin $anim;
+// Positioning context for the layout flyout below -- same convention the
+// old "You" flyout used (anchor is position: relative, panel is position:
+// absolute, full hard-offset $shadow so it reads as elevated above the
+// page). Opens *upward* (bottom, not top, as the anchor point) since this
+// sits at the very bottom of the sidebar -- opening downward would run
+// past the viewport edge.
+.layout-wrapper {
+  position: relative;
 }
 
-.sidebar.collapsed .section-label {
-  opacity: 0;
-  max-width: 0;
-  margin: 0;
+.layout-panel {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  background: t.$card-bg;
+  border: t.$border;
+  border-radius: t.$radius;
+  box-shadow: t.$shadow;
+  padding: t.$space-sm;
+  animation: panel-in 0.15s ease;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Neutralizes the <a routerLink="/account"> wrapper so the ui-nav-item
+// inside it is the only thing that visually reads as a control.
+.bottom-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
 }
 
 .layout-switch {
   display: flex;
   gap: t.$space-xs;
-  flex-wrap: wrap;
-}
-
-// Collapsed sidebar is too narrow for three 30px buttons in a row -- stack
-// them instead of relying on wrap, which would split 2-then-1 awkwardly.
-.sidebar.collapsed .layout-switch {
-  flex-direction: column;
 }
 
 .layout-switch button {
@@ -315,7 +238,7 @@ $anim: 0.2s ease;
   }
 
   &.active {
-    background: t.$ink;
+    background: t.$ink-fixed;
     color: t.$acid;
   }
 }
@@ -331,7 +254,7 @@ $anim: 0.2s ease;
   align-items: center;
   justify-content: space-between;
   gap: t.$space-sm;
-  background: t.$ink;
+  background: t.$ink-fixed;
   color: t.$acid;
   border-radius: t.$radius;
   padding: 10px 14px;

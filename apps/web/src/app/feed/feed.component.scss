@@ -29,7 +29,7 @@
   gap: 6px;
   font-family: t.$font-mono;
   font-size: 11px;
-  background: t.$ink;
+  background: t.$ink-fixed;
   color: t.$acid;
   border-radius: t.$radius;
   padding: 4px 8px;
@@ -46,7 +46,7 @@
 }
 
 .breaking-banner {
-  background: t.$ink;
+  background: t.$ink-fixed;
   color: t.$acid;
   border: t.$border;
   border-radius: t.$radius;
@@ -175,7 +175,7 @@
     font-size: 10px;
     font-weight: 700;
     background: t.$acid;
-    color: t.$ink;
+    color: t.$ink-fixed;
     padding: 2px 6px;
     border-radius: t.$radius;
     white-space: nowrap;
@@ -185,7 +185,7 @@
     font-family: t.$font-mono;
     font-size: 10px;
     font-weight: 700;
-    background: t.$ink;
+    background: t.$ink-fixed;
     color: t.$acid;
     padding: 2px 6px;
     border-radius: t.$radius;
@@ -224,7 +224,7 @@
     font-weight: 700;
     text-transform: uppercase;
     background: t.$acid;
-    color: t.$ink;
+    color: t.$ink-fixed;
     padding: 2px 6px;
     border-radius: t.$radius;
     white-space: nowrap;
@@ -284,7 +284,7 @@
   height: 12px;
   border-radius: 2px;
   margin-bottom: 8px;
-  background: linear-gradient(90deg, #ececE6 25%, #f7f7f3 50%, #ececE6 75%);
+  background: linear-gradient(90deg, t.$skeleton-1 25%, t.$skeleton-2 50%, t.$skeleton-1 75%);
   background-size: 200% 100%;
   animation: skeleton-shimmer 1.2s ease-in-out infinite;
 

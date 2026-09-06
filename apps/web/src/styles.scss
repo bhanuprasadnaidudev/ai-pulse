@@ -1,6 +1,55 @@
 /* Global styles */
 @use 'app/shared/styles/tokens' as t;
 
+// The actual color values, as CSS custom properties -- _tokens.scss's Sass
+// variables just point at these ( var(--ink, #0b0b0b) etc.), so every
+// component stylesheet that already builds on t.$ink/t.$bg/... re-themes
+// for free the moment data-theme flips, with no per-component changes.
+//
+// Three states, not two (see ThemeService): no explicit choice yet (follow
+// prefers-color-scheme), explicit light, explicit dark. The bare :root
+// block below is the light palette and the fallback for browsers with no
+// dark media query support.
+:root {
+  --ink: #0b0b0b;
+  --bg: #fafaf7;
+  --card-bg: #ffffff;
+  --text-body: #444444;
+  --text-muted: #999999;
+  --hairline: rgba(11, 11, 11, 0.2);
+  --skeleton-1: #ececE6;
+  --skeleton-2: #f7f7f3;
+}
+
+// System preference, only for someone who hasn't explicitly toggled yet --
+// ThemeService stamps data-theme itself as soon as it constructs (very
+// early, in App's constructor), so this mostly covers the instant before
+// that runs.
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ink: #f2f2ee;
+    --bg: #111110;
+    --card-bg: #1c1c1a;
+    --text-body: #cfcfc9;
+    --text-muted: #83837c;
+    --hairline: rgba(242, 242, 238, 0.18);
+    --skeleton-1: #2a2a27;
+    --skeleton-2: #333330;
+  }
+}
+
+// An explicit dark choice wins over prefers-color-scheme in either direction.
+:root[data-theme='dark'] {
+  --ink: #f2f2ee;
+  --bg: #111110;
+  --card-bg: #1c1c1a;
+  --text-body: #cfcfc9;
+  --text-muted: #83837c;
+  --hairline: rgba(242, 242, 238, 0.18);
+  --skeleton-1: #2a2a27;
+  --skeleton-2: #333330;
+}
+
 html,
 body {
   margin: 0;
@@ -8,6 +57,9 @@ body {
   background: t.$bg;
   color: t.$ink;
   font-family: t.$font-body;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 * {

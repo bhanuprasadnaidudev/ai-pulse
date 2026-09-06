@@ -61,7 +61,7 @@
   }
 
   &.active {
-    background: t.$ink;
+    background: t.$ink-fixed;
     color: t.$acid;
   }
 }
@@ -71,7 +71,7 @@
   top: -6px;
   right: -6px;
   background: t.$acid;
-  color: t.$ink;
+  color: t.$ink-fixed;
   border: t.$border;
   border-radius: 50%;
   width: 16px;
@@ -124,7 +124,7 @@
 }
 
 .filter-panel-divider {
-  border-top: 1.5px dashed rgba(t.$ink, 0.2);
+  border-top: 1.5px dashed t.$hairline;
   margin: t.$space-xs 0;
 }
 
@@ -220,7 +220,7 @@
   border: t.$border;
   border-radius: t.$radius;
   background: t.$acid;
-  color: t.$ink;
+  color: t.$ink-fixed;
   padding: 6px 10px;
   cursor: pointer;
   max-width: 260px;

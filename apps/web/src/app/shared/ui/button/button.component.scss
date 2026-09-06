@@ -16,13 +16,13 @@
 }
 
 .ui-btn.ink {
-  background: t.$ink;
+  background: t.$ink-fixed;
   color: t.$acid;
 }
 
 .ui-btn.acid {
   background: t.$acid;
-  color: t.$ink;
+  color: t.$ink-fixed;
 }
 
 .ui-btn:hover:not(:disabled) {
