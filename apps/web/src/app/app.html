@@ -7,12 +7,10 @@
   <aside class="sidebar" [class.collapsed]="collapsed()">
     <div class="sidebar-header">
       <h1 class="logo">
-        <!-- The now-marker: a playhead dot sitting on a timeline. Stays
-             visible when the sidebar collapses; only the wordmark hides. -->
-        <svg class="logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" aria-hidden="true">
-          <circle cx="12" cy="5.5" r="3.2" fill="currentColor" stroke="none" />
-          <path d="M12 9.5V18" />
-          <path d="M3 20.5h18" />
+        <!-- Just a dot in the accent colour. Stays visible when the sidebar
+             collapses; only the wordmark hides. -->
+        <svg class="logo-mark" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="7" fill="currentColor" />
         </svg>
         <span class="accent logo-full">Current</span>
       </h1>
