@@ -1,4 +1,5 @@
-import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, HttpException, HttpStatus, Injectable, SetMetadata } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request } from 'express';
 
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -7,6 +8,15 @@ const WINDOW_MS = 15 * 60 * 1000; // 15 minutes
 // path -- spent nearly the whole budget before the user had done anything
 // wrong. This is still tight enough to make password guessing useless.
 const MAX_REQUESTS_PER_WINDOW = 10;
+
+const RATE_LIMIT_MAX = 'rate-limit-max';
+
+/** Raises the ceiling for one endpoint. The default suits credential
+ * endpoints, where ten attempts in fifteen minutes is already generous;
+ * a read endpoint that merely happens to be expensive needs to survive
+ * ordinary browsing, so it opts into a higher number rather than every
+ * endpoint sharing the strictest one. */
+export const RateLimit = (max: number) => SetMetadata(RATE_LIMIT_MAX, max);
 
 interface Bucket {
   count: number;
@@ -27,6 +37,8 @@ interface Bucket {
 // bucket.
 @Injectable()
 export class RateLimitGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector) {}
+
   private readonly buckets = new Map<string, Bucket>();
   private lastSweep = Date.now();
 
@@ -39,13 +51,15 @@ export class RateLimitGuard implements CanActivate {
     // can't lock the same person out of logging in.
     const key = `${req.ip ?? 'unknown'}:${context.getHandler().name}`;
 
+    const max = this.reflector.get<number>(RATE_LIMIT_MAX, context.getHandler()) ?? MAX_REQUESTS_PER_WINDOW;
+
     const bucket = this.buckets.get(key);
     if (!bucket || bucket.resetAt <= now) {
       this.buckets.set(key, { count: 1, resetAt: now + WINDOW_MS });
       return true;
     }
 
-    if (bucket.count >= MAX_REQUESTS_PER_WINDOW) {
+    if (bucket.count >= max) {
       throw new HttpException('Too many attempts -- please try again later.', HttpStatus.TOO_MANY_REQUESTS);
     }
 
