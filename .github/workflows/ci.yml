@@ -1,0 +1,40 @@
+# Builds both workspaces on every push and pull request.
+#
+# Deliberately builds rather than tests: there is no meaningful test suite
+# yet, and a green check that only ran `echo` would be worse than none. A
+# type error or a template that references a method that doesn't exist is
+# exactly the class of mistake that reached production here before, and
+# both builds catch that.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # One install for the whole monorepo -- npm workspaces hoists to the
+      # root, the same way the Render build command does it.
+      - run: npm ci
+
+      # `prisma generate` runs as part of the API build and validates the
+      # schema, which means it insists on the datasource env vars existing.
+      # It never opens a connection, so these only have to parse.
+      - name: Build API
+        run: npm run build --workspace=api
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          DIRECT_URL: postgresql://ci:ci@localhost:5432/ci
+
+      - name: Build web
+        run: npm run build --workspace=web
