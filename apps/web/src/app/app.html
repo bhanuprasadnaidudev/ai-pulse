@@ -170,6 +170,10 @@
   <ui-page-loader label="Taking you to sign in" />
 }
 
+@if (signingOut()) {
+  <ui-page-loader label="Signing you out" />
+}
+
 @if (authBusy()) {
   <ui-page-loader label="Signing you in" />
 }

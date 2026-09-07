@@ -45,6 +45,10 @@ export class AuthService {
    * true, from wherever renderGoogleButton's callback fires (login page,
    * signup page, or any future spot). */
   authenticating = signal(false);
+  /** Separate from `authenticating`: the two show different labels, and
+   * signing out is the only one that can be true while a user is still
+   * on screen. */
+  signingOut = signal(false);
   /** Set when a Google sign-in attempt fails -- previously this failed
    * completely silently (the loader just vanished), which is exactly what
    * "I click the button and nothing happens" looks like. Login/signup
@@ -182,16 +186,23 @@ export class AuthService {
   }
 
   logout() {
-    // Dropped before the request goes out, not after it comes back -- the
-    // stored token is what would otherwise keep authenticating requests
-    // even if this call fails or never completes.
+    // Both the token and the in-memory user are dropped synchronously,
+    // before the request goes out. Clearing the user in the response
+    // callback instead meant that for the whole round-trip the app still
+    // believed someone was signed in: the account page navigated away, the
+    // shell rendered the feed, and only when the POST came back did the
+    // redirect effect notice and bounce to /login -- a visible flash of
+    // the feed on the way out.
+    this.signingOut.set(true);
     clearStoredToken();
+    this.currentUser.set(null);
+
+    // Fire-and-forget from here: this only clears the server-side cookie.
+    // Local state is already gone either way, which is the same failure
+    // mode as any logout button pressed offline.
     this.http.post(`${AUTH_BASE}/logout`, {}, { withCredentials: true }).subscribe({
-      next: () => this.currentUser.set(null),
-      // Clear the local state either way -- worst case the cookie outlives
-      // this call and /auth/me quietly re-establishes it next load, which
-      // is the same failure mode as any logout button when offline.
-      error: () => this.currentUser.set(null),
+      next: () => this.signingOut.set(false),
+      error: () => this.signingOut.set(false),
     });
   }
 }

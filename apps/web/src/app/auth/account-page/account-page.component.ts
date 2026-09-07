@@ -1,5 +1,5 @@
 import { Component, OnInit, Signal, computed, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { AuthService, AuthUser } from '../auth.service';
 import { SavedService, SavedPost } from '../../saved/saved.service';
 import { initialsFrom } from '../../shared/initials';
@@ -25,7 +25,6 @@ export class AccountPageComponent implements OnInit {
 
   constructor(
     private auth: AuthService,
-    private router: Router,
     private saved: SavedService,
   ) {
     this.currentUser = this.auth.currentUser;
@@ -50,7 +49,11 @@ export class AccountPageComponent implements OnInit {
   }
 
   signOut() {
+    // No navigation here on purpose. AuthService.logout() clears the user
+    // synchronously, and App's redirect effect is the single place that
+    // decides where a given (session, route) pair belongs -- it sends a
+    // signed-out visitor on /account to /login. Navigating to '/' as well
+    // just raced that, showing the feed for a frame first.
     this.auth.logout();
-    this.router.navigateByUrl('/');
   }
 }

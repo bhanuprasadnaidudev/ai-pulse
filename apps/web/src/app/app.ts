@@ -89,6 +89,7 @@ export class App implements OnInit {
   /** True while a Google sign-in is being exchanged for a session --
    * drives the single full-page loader, see AuthService.authenticating. */
   authBusy!: Signal<boolean>;
+  signingOut!: Signal<boolean>;
 
   constructor(
     private layoutService: FeedLayoutService,
@@ -102,6 +103,7 @@ export class App implements OnInit {
     this.currentUser = this.authService.currentUser;
     this.authChecked = this.authService.authChecked;
     this.authBusy = this.authService.authenticating;
+    this.signingOut = this.authService.signingOut;
 
     this.hideShell = toSignal(
       this.router.events.pipe(
