@@ -3,6 +3,8 @@ import { LoginPageComponent } from './auth/login-page/login-page.component';
 import { SignupPageComponent } from './auth/signup-page/signup-page.component';
 import { CompleteProfilePageComponent } from './auth/complete-profile-page/complete-profile-page.component';
 import { AccountPageComponent } from './auth/account-page/account-page.component';
+import { ForgotPasswordPageComponent } from './auth/forgot-password-page/forgot-password-page.component';
+import { ResetPasswordPageComponent } from './auth/reset-password-page/reset-password-page.component';
 
 // login/signup/complete-profile are shell-hidden, full-page routes --
 // App's <router-outlet> renders whichever of these is active. Crucially,
@@ -23,5 +25,7 @@ export const routes: Routes = [
   { path: 'login', component: LoginPageComponent },
   { path: 'signup', component: SignupPageComponent },
   { path: 'complete-profile', component: CompleteProfilePageComponent },
+  { path: 'forgot-password', component: ForgotPasswordPageComponent },
+  { path: 'reset-password', component: ResetPasswordPageComponent },
   { path: 'account', component: AccountPageComponent },
 ];

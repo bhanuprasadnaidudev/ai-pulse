@@ -3,7 +3,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { NavItemComponent } from './shared/ui/nav-item/nav-item.component';
-import { FabComponent } from './shared/ui/fab/fab.component';
 import { PageLoaderComponent } from './shared/ui/page-loader/page-loader.component';
 import { FeedComponent } from './feed/feed.component';
 import { FeedLayoutService, FeedLayout } from './feed/feed-layout.service';
@@ -17,8 +16,11 @@ const SIDEBAR_COLLAPSED_KEY = 'ai-pulse:sidebar-collapsed';
 // rendered through the app's one <router-outlet>. /account is deliberately
 // NOT here: it shows the shell (see app.routes.ts's comment on why it's
 // swapped into .content directly instead of being a routed component).
-const NO_SHELL_ROUTES = ['/login', '/signup', '/complete-profile'];
+const NO_SHELL_ROUTES = ['/login', '/signup', '/complete-profile', '/forgot-password', '/reset-password'];
 const ACCOUNT_ROUTE = '/account';
+// Reachable without a session -- the password-recovery pair included,
+// since being locked out is exactly when they're needed.
+const SIGNED_OUT_ROUTES = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
 function readStoredCollapsed(): boolean {
   try {
@@ -34,7 +36,7 @@ function currentPath(router: Router): string {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, NavItemComponent, FabComponent, PageLoaderComponent, FeedComponent, AccountPageComponent],
+  imports: [RouterOutlet, RouterLink, NavItemComponent, PageLoaderComponent, FeedComponent, AccountPageComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
@@ -135,7 +137,7 @@ export class App implements OnInit {
       const path = currentPath(this.router);
 
       if (!user) {
-        if (path !== '/login' && path !== '/signup') this.router.navigateByUrl('/login');
+        if (!SIGNED_OUT_ROUTES.includes(path)) this.router.navigateByUrl('/login');
         return;
       }
       if (user.needsPassword) {
@@ -145,7 +147,7 @@ export class App implements OnInit {
       // Fully signed in -- these three only ever make sense when you
       // aren't, so bounce back into the app instead of leaving them
       // reachable (e.g. by typing the URL) once signed in.
-      if (path === '/login' || path === '/signup' || path === '/complete-profile') {
+      if (NO_SHELL_ROUTES.includes(path)) {
         this.router.navigateByUrl('/');
       }
     });

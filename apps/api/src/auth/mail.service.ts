@@ -64,6 +64,42 @@ export class MailService {
       logger.warn(`Failed to send verification email to ${to}: ${(err as Error).message}`);
     }
   }
+
+  async sendPasswordResetEmail(to: string, name: string, resetUrl: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: `"Current" <${process.env.GMAIL_USER}>`,
+      to,
+      subject: 'Reset your Current password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
+          <h2 style="margin: 0 0 16px;">Hi ${escapeHtml(name)},</h2>
+          <p style="color: #444; line-height: 1.6;">
+            Someone asked to reset the password for your Current account. Choose a new one here:
+          </p>
+          <p style="margin: 24px 0;">
+            <a href="${resetUrl}" style="background: #0b0b0b; color: #d6ff3f; padding: 12px 20px; text-decoration: none; font-weight: bold; display: inline-block;">
+              Reset password
+            </a>
+          </p>
+          <p style="color: #999; font-size: 12px; line-height: 1.6;">
+            This link expires in 1 hour and can only be used once. If you didn't ask for this,
+            you can ignore this email -- your password won't change.
+          </p>
+        </div>
+      `,
+    });
+  }
+
+  /** Same reasoning as sendVerificationEmailSafely: requestPasswordReset
+   * must answer identically whether or not the account exists, so a send
+   * failure can only be surfaced here, in the logs. */
+  async sendPasswordResetEmailSafely(to: string, name: string, resetUrl: string): Promise<void> {
+    try {
+      await this.sendPasswordResetEmail(to, name, resetUrl);
+    } catch (err) {
+      logger.warn(`Failed to send password reset email to ${to}: ${(err as Error).message}`);
+    }
+  }
 }
 
 function escapeHtml(value: string): string {

@@ -6,7 +6,12 @@ import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MailService } from './mail.service.js';
-import { MAX_PASSWORD_BYTES, MIN_PASSWORD_LENGTH, VERIFICATION_TOKEN_EXPIRY_MS } from './auth.constants.js';
+import {
+  MAX_PASSWORD_BYTES,
+  MIN_PASSWORD_LENGTH,
+  RESET_TOKEN_EXPIRY_MS,
+  VERIFICATION_TOKEN_EXPIRY_MS,
+} from './auth.constants.js';
 
 const BCRYPT_SALT_ROUNDS = 10;
 // verifyIdToken fetches Google's public certs over the network the first
@@ -222,6 +227,62 @@ export class AuthService {
     } catch {
       // Swallowed deliberately -- see the doc comment above.
     }
+  }
+
+  /** Always resolves the same way whether or not the address exists, for
+   * the same anti-enumeration reason as resendVerification. A Google-only
+   * account (no passwordHash) is also a no-op: there's no password to
+   * reset, and saying so would confirm the address exists. */
+  async requestPasswordReset(rawEmail: string): Promise<void> {
+    try {
+      const email = this.normalizeEmail(rawEmail);
+      const user = await this.prisma.user.findUnique({ where: { email } });
+      if (!user?.passwordHash) return;
+
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { resetToken: token, resetTokenExpiresAt: expiresAt },
+      });
+
+      // Not awaited -- same reasoning as signup(): the response shouldn't
+      // wait out an SMTP round-trip.
+      const resetUrl = `${process.env.WEB_APP_URL}/reset-password?token=${token}`;
+      void this.mail.sendPasswordResetEmailSafely(email, user.name, resetUrl);
+    } catch {
+      // Swallowed deliberately -- see the doc comment above.
+    }
+  }
+
+  /** Consumes the token: a successful reset clears it, so a reset link
+   * can't be replayed. Also clears any pending verification token and
+   * marks the address verified -- receiving the email proves control of
+   * the inbox, which is the same thing verification checks. */
+  async resetPassword(token: string, password: string): Promise<User> {
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      throw new BadRequestException(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+    }
+    if (!token) {
+      throw new BadRequestException('That reset link is invalid. Request a new one.');
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { resetToken: token } });
+    if (!user || !user.resetTokenExpiresAt || user.resetTokenExpiresAt < new Date()) {
+      throw new BadRequestException('That reset link has expired or was already used. Request a new one.');
+    }
+
+    return this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await this.hashPassword(password),
+        resetToken: null,
+        resetTokenExpiresAt: null,
+        emailVerified: true,
+        verificationToken: null,
+        verificationTokenExpiresAt: null,
+      },
+    });
   }
 
   /** Returns null on a missing/expired token rather than throwing -- the

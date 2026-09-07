@@ -20,6 +20,7 @@ export class AccountPageComponent implements OnInit {
   /** Avatar fallback for an account with no Google picture. */
   initials: Signal<string>;
   savedPosts = signal<SavedPost[]>([]);
+  savedTotal = signal(0);
   savedLoading = signal(true);
 
   constructor(
@@ -33,8 +34,9 @@ export class AccountPageComponent implements OnInit {
 
   ngOnInit() {
     this.saved.list().subscribe({
-      next: (posts) => {
-        this.savedPosts.set(posts);
+      next: (res) => {
+        this.savedPosts.set(res.posts);
+        this.savedTotal.set(res.total);
         this.savedLoading.set(false);
       },
       error: () => this.savedLoading.set(false),
@@ -44,6 +46,7 @@ export class AccountPageComponent implements OnInit {
   unsave(postId: string) {
     this.saved.unsave(postId);
     this.savedPosts.update((posts) => posts.filter((p) => p.id !== postId));
+    this.savedTotal.update((n) => Math.max(0, n - 1));
   }
 
   signOut() {

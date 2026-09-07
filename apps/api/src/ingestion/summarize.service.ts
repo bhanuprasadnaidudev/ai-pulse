@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiQuotaService } from '../gemini/gemini-quota.service.js';
 
 export interface SummaryAndClassification {
   summary: string;
@@ -19,10 +20,20 @@ const MAJOR_CRITERIA = `Whether this is MAJOR: a genuinely big deal for the AI f
 export class SummarizeService {
   private readonly ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+  constructor(private readonly quota: GeminiQuotaService) {}
+
   /** One Gemini call, used during ingestion: produces the plain-language
    * summary and the majority judgment together, so accuracy doesn't cost an
    * extra API call against the 15-req/min free-tier quota. */
   async summarizeAndClassify(title: string, sourceTier: number): Promise<SummaryAndClassification> {
+    // Throwing (rather than returning a placeholder) is deliberate: the
+    // source agent treats a failure as "leave this item unclaimed", so the
+    // story is picked up by a later run instead of being stored with a
+    // fabricated summary.
+    if (!(await this.quota.tryConsume('ingestion'))) {
+      throw new ServiceUnavailableException("Daily Gemini budget for ingestion is spent -- this item waits for tomorrow's runs.");
+    }
+
     const model = this.ai.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
     const prompt = `You are labeling one item for an AI news feed. Given the headline below, answer two things:
 1. A one-sentence, plain-language summary of what it means for a non-technical reader (no jargon).

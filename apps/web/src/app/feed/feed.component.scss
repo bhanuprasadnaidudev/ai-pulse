@@ -409,3 +409,39 @@
     }
   }
 }
+
+// First impression for a brand-new account, where the feed is genuinely
+// empty rather than filtered to nothing -- says what the app is instead of
+// showing a bare "no posts" line.
+.empty-feed {
+  max-width: 460px;
+  padding: t.$space-lg 0;
+
+  h2 {
+    font-family: t.$font-head;
+    font-size: 20px;
+    line-height: 1.35;
+    margin: t.$space-md 0 t.$space-sm;
+  }
+
+  p {
+    color: t.$text-body;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0 0 t.$space-sm;
+  }
+}
+
+.empty-feed-dot {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: t.$acid;
+}
+
+.empty-feed-hint {
+  font-family: t.$font-mono;
+  font-size: 12px;
+  color: t.$text-muted !important;
+}

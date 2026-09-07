@@ -2,6 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 
+const DEFAULT_SAVED_LIMIT = 50;
+const MAX_SAVED_LIMIT = 200;
+
 @Injectable()
 export class SavedService {
   constructor(private readonly prisma: PrismaService) {}
@@ -42,13 +45,23 @@ export class SavedService {
   }
 
   /** Full post data, most recently saved first -- what the account page's
-   * "Saved posts" section actually renders. */
-  async list(userId: string) {
+   * "Saved posts" section actually renders. Capped: this was unbounded,
+   * which is fine at 20 saved posts and progressively worse after that,
+   * since it returns every field of every saved post in one response. */
+  async list(userId: string, limit = DEFAULT_SAVED_LIMIT) {
+    const take = Math.min(Math.max(limit, 1), MAX_SAVED_LIMIT);
     const rows = await this.prisma.savedPost.findMany({
       where: { userId },
       include: { post: true },
       orderBy: { createdAt: 'desc' },
+      take,
     });
     return rows.map((r) => ({ ...r.post, savedAt: r.createdAt }));
+  }
+
+  /** Total saved, so the UI can say "showing 50 of 214" rather than
+   * silently truncating. */
+  async count(userId: string): Promise<number> {
+    return this.prisma.savedPost.count({ where: { userId } });
   }
 }

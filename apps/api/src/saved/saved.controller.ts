@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import type { User } from '@prisma/client';
 import { AuthGuard } from '../auth/auth.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
@@ -13,8 +13,13 @@ export class SavedController {
   constructor(private readonly saved: SavedService) {}
 
   @Get()
-  list(@CurrentUser() user: User) {
-    return this.saved.list(user.id);
+  async list(@CurrentUser() user: User, @Query('limit') limit?: string) {
+    const parsed = limit ? parseInt(limit, 10) : undefined;
+    const [posts, total] = await Promise.all([
+      this.saved.list(user.id, Number.isNaN(parsed!) ? undefined : parsed),
+      this.saved.count(user.id),
+    ]);
+    return { posts, total };
   }
 
   @Get('ids')

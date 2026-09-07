@@ -45,7 +45,22 @@
   } @else if (errorMsg()) {
     <div class="state-msg error">{{ errorMsg() }}</div>
   } @else if (posts().length === 0) {
-    <div class="state-msg">No posts match this filter.</div>
+    <!-- Two different empty states: an active filter that matched nothing
+         is a dead end to back out of, whereas an empty unfiltered feed is
+         someone's first impression and should say what this is. -->
+    @if (activeSources().length > 0 || activeDate() || activeQuery()) {
+      <div class="state-msg">No posts match this filter.</div>
+    } @else {
+      <div class="empty-feed">
+        <span class="empty-feed-dot" aria-hidden="true"></span>
+        <h2>Every AI story that matters, in plain language</h2>
+        <p>
+          Current pulls from the research labs and the industry press — launches, funding,
+          layoffs, policy — and summarises each one in a sentence. New stories arrive hourly.
+        </p>
+        <p class="empty-feed-hint">Nothing here yet. The next batch lands within the hour.</p>
+      </div>
+    }
   } @else {
     <div
       class="posts"

@@ -39,6 +39,9 @@
               </li>
             }
           </ul>
+          @if (savedTotal() > savedPosts().length) {
+            <p class="saved-empty">Showing your {{ savedPosts().length }} most recent of {{ savedTotal() }} saved.</p>
+          }
         }
       </div>
 

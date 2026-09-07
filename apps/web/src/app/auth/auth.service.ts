@@ -154,6 +154,29 @@ export class AuthService {
       .pipe(tap((res) => this.currentUser.set(res.user)));
   }
 
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${AUTH_BASE}/forgot-password`, { email }, { withCredentials: true });
+  }
+
+  /** Signs the user straight in on success -- the API issues a session,
+   * and storing it here means App's redirect effect takes them into the
+   * app without a second login. */
+  resetPassword(token: string, password: string, confirmPassword: string): Observable<{ user: AuthUser; token: string }> {
+    return this.http
+      .post<{ user: AuthUser; token: string }>(
+        `${AUTH_BASE}/reset-password`,
+        { token, password, confirmPassword },
+        { withCredentials: true },
+      )
+      .pipe(
+        tap((res) => {
+          storeToken(res.token);
+          this.currentUser.set(res.user);
+          this.authChecked.set(true);
+        }),
+      );
+  }
+
   resendVerification(email: string): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${AUTH_BASE}/resend-verification`, { email }, { withCredentials: true });
   }

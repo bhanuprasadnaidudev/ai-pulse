@@ -75,8 +75,10 @@ export class SavedService {
 
   /** Full post data for the account page's "Saved posts" section --
    * unlike loadIds()/toggle(), fetched fresh each time that section opens
-   * rather than cached, since it's viewed far less often than the feed. */
-  list(): Observable<SavedPost[]> {
-    return this.http.get<SavedPost[]>(SAVED_BASE, { withCredentials: true });
+   * rather than cached, since it's viewed far less often than the feed.
+   * `total` is separate from `posts.length` because the API caps how many
+   * it returns, so the UI can say what it isn't showing. */
+  list(): Observable<{ posts: SavedPost[]; total: number }> {
+    return this.http.get<{ posts: SavedPost[]; total: number }>(SAVED_BASE, { withCredentials: true });
   }
 }

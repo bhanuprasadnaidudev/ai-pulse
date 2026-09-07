@@ -1,10 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service.js';
 import { configStatus } from './config-check.js';
+import { GeminiQuotaService } from './gemini/gemini-quota.service.js';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly quota: GeminiQuotaService,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -20,11 +24,18 @@ export class AppController {
    * have a value` in the logs, with nothing connecting that to a specific
    * unset variable. One request answers it now. */
   @Get('health/config')
-  getConfigHealth() {
+  async getConfigHealth() {
     const config = configStatus();
     const missing = Object.entries(config)
       .filter(([, present]) => !present)
       .map(([name]) => name);
-    return { ok: missing.length === 0, missing, config };
+    return {
+      ok: missing.length === 0,
+      missing,
+      config,
+      // Today's Gemini spend, so "is the feed about to stop updating?" is
+      // answerable without digging through logs.
+      geminiToday: { used: await this.quota.used(), ...this.quota.limits },
+    };
   }
 }

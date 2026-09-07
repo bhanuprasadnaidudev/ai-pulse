@@ -116,6 +116,36 @@ export class AuthController {
     res.redirect(302, `${process.env.WEB_APP_URL}/?verified=1`);
   }
 
+  /** Always the same response whether or not the account exists -- see
+   * AuthService.requestPasswordReset. Rate limited: it triggers an email. */
+  @Post('forgot-password')
+  @UseGuards(RateLimitGuard)
+  async forgotPassword(@Body('email') email: string) {
+    await this.auth.requestPasswordReset(email);
+    return { message: 'If an account exists for that email, a reset link is on its way.' };
+  }
+
+  /** Signs the user in on success: they've just proven control of the
+   * inbox and set the password, so making them immediately type it again
+   * adds nothing. */
+  @Post('reset-password')
+  @UseGuards(RateLimitGuard)
+  async resetPassword(
+    @Body('token') token: string,
+    @Body('password') password: string,
+    @Body('confirmPassword') confirmPassword: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    if (password !== confirmPassword) {
+      throw new BadRequestException('Passwords do not match.');
+    }
+    const user = await this.auth.resetPassword(token, password);
+    const sessionToken = this.auth.issueSessionToken(user);
+
+    res.cookie(SESSION_COOKIE_NAME, sessionToken, COOKIE_OPTIONS);
+    return { user: toPublicUser(user), token: sessionToken };
+  }
+
   @Post('resend-verification')
   @UseGuards(RateLimitGuard)
   async resendVerification(@Body('email') email: string) {

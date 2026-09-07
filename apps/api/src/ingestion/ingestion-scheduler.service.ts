@@ -9,12 +9,18 @@ import { sourcesByPriority } from './sources.js';
 
 const logger = new Logger('IngestionScheduler');
 
-/** Runs the same per-source agents POST /ingest triggers, automatically,
+/** Runs hourly rather than every 30 minutes: at ~20 summaries per run
+ * that halves the worst-case daily Gemini spend (960 -> 480) and leaves
+ * real headroom under the free tier's daily cap for the on-demand "Read
+ * more" breakdowns, which are user-triggered and can't be scheduled
+ * around. Hourly is still well inside "a new official post shows up
+ * same-day".
+ *
+ * Runs the same per-source agents POST /ingest triggers, automatically,
  * so the feed refreshes itself instead of only ever updating when someone
- * manually calls the endpoint. Every 30 minutes is frequent enough that a
- * genuinely new official post shows up same-day, while staying nowhere
- * near Gemini's free-tier 15 req/min ceiling even if every one of the 10
- * sources has fresh items in the same run (max 3 items/source, 4.5s apart).
+ * manually calls the endpoint. Per-minute pacing is handled separately by
+ * the run budget and the delay between summaries; GeminiQuotaService caps
+ * the daily side.
  *
  * This only runs while the API process itself is alive -- it's not a
  * substitute for an external scheduler (e.g. cron-job.org hitting a
@@ -32,7 +38,7 @@ export class IngestionSchedulerService {
     private readonly prisma: PrismaService,
   ) {}
 
-  @Cron('0,30 * * * *')
+  @Cron('0 * * * *')
   async runScheduledIngest() {
     logger.log('Scheduled ingestion run starting...');
     const results: Record<string, number> = {};

@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GeminiQuotaService } from '../gemini/gemini-quota.service.js';
 
 const MAX_ARTICLE_CHARS = 8000;
 const FETCH_TIMEOUT_MS = 8000;
@@ -24,6 +25,8 @@ function stripHtml(html: string): string {
 export class ExplainerService {
   private readonly logger = new Logger(ExplainerService.name);
   private readonly ai = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+  constructor(private readonly quota: GeminiQuotaService) {}
 
   /** Best-effort: grounds the breakdown in the real article when we can fetch
    * it, falls back to the stored one-line summary when we can't (paywall,
@@ -56,6 +59,15 @@ export class ExplainerService {
   }
 
   async explain(title: string, summary: string, source: string, url: string): Promise<string> {
+    // Checked before the article fetch, so a request that can't be served
+    // doesn't spend several seconds scraping first. The modal shows this
+    // message and still offers the original source link.
+    if (!(await this.quota.tryConsume('user'))) {
+      throw new ServiceUnavailableException(
+        "Today's AI breakdown budget is used up. The original source is linked below, and this resets tomorrow.",
+      );
+    }
+
     const articleText = await this.fetchArticleText(url);
     const model = this.ai.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
 
