@@ -282,7 +282,7 @@ $mobile: 700px;
 
 // Neutralizes the <a routerLink="/account"> wrapper so the ui-nav-item
 // inside it is the only thing that visually reads as a control.
-.bottom-link {
+.nav-link {
   display: block;
   text-decoration: none;
   color: inherit;
