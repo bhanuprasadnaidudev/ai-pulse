@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Current — Architecture Blueprint</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+
+  :root {
+    --ink: #14140f;
+    --body: #2b2b26;
+    --muted: #6b6b62;
+    --rule: #d8d8d0;
+    --soft: #f5f5f0;
+    --acid: #7a8f00;
+    --accent-bg: #f7f9e8;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", -apple-system, system-ui, sans-serif;
+    font-size: 10.2pt;
+    line-height: 1.55;
+    color: var(--body);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  h1, h2, h3, h4 { color: var(--ink); font-weight: 700; line-height: 1.2; }
+  h2 { font-size: 16pt; margin: 0 0 4mm; padding-bottom: 2mm; border-bottom: 2px solid var(--ink); }
+  h3 { font-size: 11.5pt; margin: 6mm 0 2mm; }
+  h4 { font-size: 10.2pt; margin: 4mm 0 1mm; color: var(--acid); text-transform: uppercase; letter-spacing: .06em; font-size: 8.5pt; }
+  p { margin: 0 0 3mm; }
+  ul, ol { margin: 0 0 3mm; padding-left: 5mm; }
+  li { margin-bottom: 1.2mm; }
+  strong { color: var(--ink); }
+  code { font-family: "Cascadia Mono", Consolas, monospace; font-size: 8.8pt; background: var(--soft); padding: 0.3mm 1mm; border-radius: 1mm; }
+
+  /* ---------- cover ---------- */
+  .cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
+  .dot { width: 14mm; height: 14mm; border-radius: 50%; background: var(--ink); margin-bottom: 8mm; }
+  .cover h1 { font-size: 40pt; margin: 0 0 2mm; letter-spacing: -0.02em; }
+  .cover .sub { font-size: 15pt; color: var(--muted); font-weight: 400; margin-bottom: 12mm; }
+  .cover .meta { border-top: 2px solid var(--ink); padding-top: 4mm; font-size: 9pt; color: var(--muted); display: flex; gap: 12mm; flex-wrap: wrap; }
+  .cover .meta b { display: block; color: var(--ink); font-size: 9.5pt; }
+
+  /* ---------- layout helpers ---------- */
+  section { page-break-before: always; }
+  section:first-of-type { page-break-before: avoid; }
+  .lede { font-size: 11pt; color: var(--ink); border-left: 3px solid var(--acid); padding-left: 4mm; margin-bottom: 5mm; }
+  .avoid { page-break-inside: avoid; }
+
+  table { width: 100%; border-collapse: collapse; margin: 0 0 4mm; font-size: 9.2pt; page-break-inside: avoid; }
+  th { text-align: left; background: var(--soft); color: var(--ink); font-size: 8.2pt; text-transform: uppercase; letter-spacing: .05em; padding: 2mm; border-bottom: 1.5px solid var(--rule); }
+  td { padding: 2mm; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  td:first-child { color: var(--ink); font-weight: 600; }
+
+  .box { background: var(--soft); border-radius: 2mm; padding: 4mm; margin: 0 0 4mm; page-break-inside: avoid; }
+  .box.note { background: var(--accent-bg); border-left: 3px solid var(--acid); }
+  .box h4 { margin-top: 0; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+
+  pre { background: var(--soft); border-radius: 2mm; padding: 3mm 4mm; font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 8.4pt; line-height: 1.45; overflow: hidden; white-space: pre-wrap; margin: 0 0 4mm; page-break-inside: avoid; color: var(--ink); }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; }
+  .steps li { counter-increment: step; position: relative; padding-left: 9mm; margin-bottom: 3mm; page-break-inside: avoid; }
+  .steps li::before { content: counter(step); position: absolute; left: 0; top: 0.2mm; width: 6mm; height: 6mm; border-radius: 50%;
+                      background: var(--ink); color: #fff; font-size: 8pt; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .steps b { display: block; color: var(--ink); }
+
+  .toc { list-style: none; padding: 0; font-size: 10.5pt; }
+  .toc li { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--rule); padding: 2mm 0; }
+  .toc b { color: var(--ink); }
+  .toc span { color: var(--muted); }
+
+  figure { margin: 0 0 5mm; page-break-inside: avoid; }
+  figcaption { font-size: 8.4pt; color: var(--muted); margin-top: 2mm; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="dot"></div>
+  <h1>Current</h1>
+  <div class="sub">Architecture blueprint — how it is built, and why</div>
+  <p style="max-width: 130mm; color: var(--body); font-size: 11pt;">
+    Every AI story that matters, from the labs and the industry press, summarised in
+    plain language and updated hourly. This document explains the whole system: each
+    component, the reasoning behind it, how a story travels from an RSS feed to a
+    reader's screen, and what has already gone wrong in production.
+  </p>
+  <div class="meta">
+    <div><b>Version</b>1.0</div>
+    <div><b>Date</b>7 September 2026</div>
+    <div><b>Web</b>current-3wkv.onrender.com</div>
+    <div><b>API</b>ai-pulse-api-zcyv.onrender.com</div>
+  </div>
+</div>
+
+<section>
+  <h2>Contents</h2>
+  <ol class="toc">
+    <li><b>1 · What Current is</b><span>The product in one page</span></li>
+    <li><b>2 · System map</b><span>Every moving part, and what talks to what</span></li>
+    <li><b>3 · The stack</b><span>Each choice and the reason for it</span></li>
+    <li><b>4 · Ingestion</b><span>43 feeds to a clean timeline</span></li>
+    <li><b>5 · The AI budget</b><span>Working inside a free tier that can run out</span></li>
+    <li><b>6 · The reading path</b><span>What happens when someone opens the app</span></li>
+    <li><b>7 · Accounts and mail</b><span>Sign-in, sessions, verification</span></li>
+    <li><b>8 · Data model</b><span>Three tables</span></li>
+    <li><b>9 · Security posture</b><span>What is defended, and how</span></li>
+    <li><b>10 · Deployment and operations</b><span>Where it runs, how to check it</span></li>
+    <li><b>11 · Production failure log</b><span>Five real failures and their lessons</span></li>
+    <li><b>12 · Limits and what comes next</b><span>Known edges</span></li>
+  </ol>
+
+  <h2 style="margin-top: 10mm;">1 · What Current is</h2>
+  <p class="lede">
+    An AI news reader that does the filtering for you. It watches 43 sources, discards
+    duplicates and off-topic noise, and has a language model write a short plain-English
+    summary of what survives.
+  </p>
+  <p>
+    The problem it solves is not access to AI news — there is far too much of it. The problem
+    is that following the field properly means checking a dozen lab blogs and a dozen news
+    sites, most of which repeat each other. Current collapses that into one timeline where
+    each story appears once, described in a couple of sentences, with the genuinely
+    significant ones marked.
+  </p>
+
+  <h3>What a reader can do</h3>
+  <table>
+    <tr><th>Capability</th><th>Detail</th></tr>
+    <tr><td>Read the feed</td><td>Newest first, infinite scroll, three layout modes — grid, continuous and one-at-a-time.</td></tr>
+    <tr><td>Filter</td><td>By source (multi-select), by search term, or jump to a specific date.</td></tr>
+    <tr><td>See what matters</td><td>Stories judged <em>major</em> at ingestion time are visually marked and drive the trending panel.</td></tr>
+    <tr><td>Go deeper</td><td>"Read more" generates a longer breakdown on demand, grounded in the original article text, then caches it forever.</td></tr>
+    <tr><td>Save</td><td>Signed-in readers bookmark posts; the account page lists them.</td></tr>
+  </table>
+
+  <div class="box note">
+    <h4>The constraint that shaped everything</h4>
+    <p style="margin:0">
+      Current runs entirely on free tiers — hosting, database, Redis, AI and mail. That is not
+      a detail, it is the central design constraint. It is why there is a daily AI budget with
+      its own accounting, why ingestion is prioritised rather than exhaustive, why mail goes
+      over an HTTP API rather than SMTP, and why the ingestion schedule lives outside the
+      application. Nearly every unusual decision in this document traces back to it.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>2 · System map</h2>
+  <p class="lede">Two deployed services, four external providers, one direction of data flow.</p>
+
+  <figure>
+    <svg viewBox="0 0 720 430" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0 0 L10 5 L0 10 z" fill="#14140f"/>
+        </marker>
+      </defs>
+
+      <!-- sources -->
+      <rect x="10" y="20" width="130" height="70" rx="6" fill="#f5f5f0" stroke="#14140f" stroke-width="1.5"/>
+      <text x="75" y="45" text-anchor="middle" font-size="13" font-weight="700" fill="#14140f">43 RSS feeds</text>
+      <text x="75" y="63" text-anchor="middle" font-size="10" fill="#6b6b62">labs · press</text>
+      <text x="75" y="78" text-anchor="middle" font-size="10" fill="#6b6b62">tier 1 and tier 2</text>
+
+      <!-- scheduler -->
+      <rect x="10" y="120" width="130" height="55" rx="6" fill="#fff" stroke="#6b6b62" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <text x="75" y="142" text-anchor="middle" font-size="11" font-weight="700" fill="#14140f">External cron</text>
+      <text x="75" y="159" text-anchor="middle" font-size="9.5" fill="#6b6b62">hourly GET /ingest</text>
+
+      <!-- API -->
+      <rect x="215" y="20" width="200" height="230" rx="8" fill="#f7f9e8" stroke="#14140f" stroke-width="2"/>
+      <text x="315" y="44" text-anchor="middle" font-size="14" font-weight="700" fill="#14140f">NestJS API</text>
+      <text x="315" y="60" text-anchor="middle" font-size="9.5" fill="#6b6b62">Render web service (free)</text>
+
+      <rect x="232" y="74" width="166" height="26" rx="4" fill="#fff" stroke="#d8d8d0"/>
+      <text x="315" y="91" text-anchor="middle" font-size="10" fill="#14140f">ingestion · LangGraph agents</text>
+      <rect x="232" y="106" width="166" height="26" rx="4" fill="#fff" stroke="#d8d8d0"/>
+      <text x="315" y="123" text-anchor="middle" font-size="10" fill="#14140f">feed · read + explain</text>
+      <rect x="232" y="138" width="166" height="26" rx="4" fill="#fff" stroke="#d8d8d0"/>
+      <text x="315" y="155" text-anchor="middle" font-size="10" fill="#14140f">auth · sessions · mail</text>
+      <rect x="232" y="170" width="166" height="26" rx="4" fill="#fff" stroke="#d8d8d0"/>
+      <text x="315" y="187" text-anchor="middle" font-size="10" fill="#14140f">saved · bookmarks</text>
+      <rect x="232" y="202" width="166" height="26" rx="4" fill="#fff" stroke="#d8d8d0"/>
+      <text x="315" y="219" text-anchor="middle" font-size="10" fill="#14140f">gemini · daily quota</text>
+
+      <!-- web -->
+      <rect x="215" y="300" width="200" height="80" rx="8" fill="#fff" stroke="#14140f" stroke-width="2"/>
+      <text x="315" y="326" text-anchor="middle" font-size="14" font-weight="700" fill="#14140f">Angular SPA</text>
+      <text x="315" y="344" text-anchor="middle" font-size="9.5" fill="#6b6b62">Render static site (free)</text>
+      <text x="315" y="362" text-anchor="middle" font-size="9.5" fill="#6b6b62">signals · no SSR</text>
+
+      <!-- providers -->
+      <rect x="490" y="20" width="215" height="52" rx="6" fill="#fff" stroke="#14140f" stroke-width="1.5"/>
+      <text x="597" y="40" text-anchor="middle" font-size="12" font-weight="700" fill="#14140f">Neon Postgres</text>
+      <text x="597" y="57" text-anchor="middle" font-size="9.5" fill="#6b6b62">posts · users · saved</text>
+
+      <rect x="490" y="86" width="215" height="52" rx="6" fill="#fff" stroke="#14140f" stroke-width="1.5"/>
+      <text x="597" y="106" text-anchor="middle" font-size="12" font-weight="700" fill="#14140f">Upstash Redis</text>
+      <text x="597" y="123" text-anchor="middle" font-size="9.5" fill="#6b6b62">dedupe keys · quota counter</text>
+
+      <rect x="490" y="152" width="215" height="52" rx="6" fill="#fff" stroke="#14140f" stroke-width="1.5"/>
+      <text x="597" y="172" text-anchor="middle" font-size="12" font-weight="700" fill="#14140f">Gemini 3.5 Flash Lite</text>
+      <text x="597" y="189" text-anchor="middle" font-size="9.5" fill="#6b6b62">summarise · classify · explain</text>
+
+      <rect x="490" y="218" width="215" height="52" rx="6" fill="#fff" stroke="#14140f" stroke-width="1.5"/>
+      <text x="597" y="238" text-anchor="middle" font-size="12" font-weight="700" fill="#14140f">Brevo</text>
+      <text x="597" y="255" text-anchor="middle" font-size="9.5" fill="#6b6b62">transactional mail over HTTPS</text>
+
+      <!-- arrows -->
+      <path d="M140 55 L212 55" stroke="#14140f" stroke-width="1.5" marker-end="url(#a)"/>
+      <path d="M140 147 L212 120" stroke="#6b6b62" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a)"/>
+      <path d="M415 46 L487 46" stroke="#14140f" stroke-width="1.5" marker-end="url(#a)"/>
+      <path d="M415 112 L487 112" stroke="#14140f" stroke-width="1.5" marker-end="url(#a)"/>
+      <path d="M415 178 L487 178" stroke="#14140f" stroke-width="1.5" marker-end="url(#a)"/>
+      <path d="M415 240 L487 244" stroke="#14140f" stroke-width="1.5" marker-end="url(#a)"/>
+      <path d="M315 297 L315 253" stroke="#14140f" stroke-width="1.5" marker-end="url(#a)"/>
+      <text x="325" y="278" font-size="9.5" fill="#6b6b62">REST + Bearer</text>
+
+      <text x="150" y="405" font-size="9.5" fill="#6b6b62">Solid: request path.  Dashed: scheduled trigger, outside the app.</text>
+    </svg>
+    <figcaption>The API is the only component with credentials. The browser never talks to Postgres, Redis, Gemini or Brevo.</figcaption>
+  </figure>
+
+  <h3>Why the frontend is a static bundle</h3>
+  <p>
+    The Angular app compiles to plain files served from a CDN — no Node process, no server-side
+    rendering. It cannot go down independently of the CDN, costs nothing to host, has no cold
+    start, and cannot leak a secret because it never holds one. The cost is that the first paint
+    shows a loading state while it fetches the feed, and that search-engine crawlers see an empty
+    shell. For a signed-in reading app, that trade is clearly worth it.
+  </p>
+</section>
+
+<section>
+  <h2>3 · The stack</h2>
+  <p class="lede">Every dependency here earns its place. What follows is the reason each one was chosen over the obvious alternative.</p>
+
+  <h3>Frontend</h3>
+  <table>
+    <tr><th>Choice</th><th>Why, and what was rejected</th></tr>
+    <tr>
+      <td>Angular 21</td>
+      <td>Standalone components with <em>signals</em> for state. Signals give fine-grained reactivity without pulling in a state-management library — the feed, filters and auth state are all plain signals, and the template re-renders only what changed.</td>
+    </tr>
+    <tr>
+      <td>No UI library</td>
+      <td>Badge, button, card, nav-item and page-loader are hand-built in <code>shared/ui</code>. A component library would have brought a design language that had to be fought; the whole visual identity here is bespoke.</td>
+    </tr>
+    <tr>
+      <td>Custom masonry</td>
+      <td>CSS cannot do true masonry yet. <code>grid-template-rows: masonry</code> is still behind a flag, and CSS multi-column fills top-to-bottom — which put the second-newest story at the bottom-left instead of beside the newest, destroying reading order. The directive measures each card and assigns it a span across many 4px row tracks.</td>
+    </tr>
+  </table>
+
+  <h3>Backend</h3>
+  <table>
+    <tr><th>Choice</th><th>Why, and what was rejected</th></tr>
+    <tr>
+      <td>NestJS 12</td>
+      <td>Modules and dependency injection as a default rather than a convention. With ingestion, auth, feed and saved in one process, enforced boundaries are what stop them growing into each other.</td>
+    </tr>
+    <tr>
+      <td>Prisma 6 + Neon</td>
+      <td>Typed queries and tracked migrations — six so far, each reviewable. Neon's free tier is real Postgres. The schema uses a pooled connection at runtime and a direct one for migrations, which is Neon's documented requirement.</td>
+    </tr>
+    <tr>
+      <td>Upstash Redis</td>
+      <td>Two jobs only: 30-day URL dedupe keys and the daily AI counter. Chosen over node-redis because it speaks HTTP — no connection pool to keep alive on an instance that sleeps, and no socket to leak.</td>
+    </tr>
+    <tr>
+      <td>LangGraph</td>
+      <td>Each source runs a small state graph (<code>fetch → process → END</code>) rather than a loop body. The value is isolation: one feed timing out fails its own graph and the run continues. It also leaves room for per-source branching later without restructuring.</td>
+    </tr>
+    <tr>
+      <td>Gemini 3.5 Flash Lite</td>
+      <td>Summarising a headline and a blurb is not a hard reasoning task; it is a high-volume one. Flash Lite is the cheapest model that writes acceptable prose, and volume — not quality — is the binding constraint on the free tier.</td>
+    </tr>
+    <tr>
+      <td>Brevo over HTTP</td>
+      <td>Not a preference — a necessity. Render blocks outbound SMTP ports 25, 465 and 587 on free web services, so no SMTP client of any kind can send from there. Brevo's transactional API is HTTPS on 443, which no port policy touches. Its free tier verifies a single sender address, so no domain purchase is required.</td>
+    </tr>
+    <tr>
+      <td>Hand-rolled rate limiting</td>
+      <td>A plain <code>CanActivate</code> guard rather than <code>@nestjs/throttler</code>, matching the existing auth guard convention and avoiding a dependency for roughly forty lines of logic.</td>
+    </tr>
+  </table>
+</section>
+
+<section>
+  <h2>4 · Ingestion</h2>
+  <p class="lede">Turning 43 noisy feeds into a clean timeline, on a budget that can run out.</p>
+
+  <h3>How the sources are described</h3>
+  <p>
+    Every source is a typed record, not just a URL. The extra fields exist because real feeds
+    misbehave in specific, repeatable ways.
+  </p>
+  <table>
+    <tr><th>Field</th><th>What it solves</th></tr>
+    <tr><td>tier</td><td>1 = OpenAI, Anthropic, DeepMind, Google. 2 = everyone else. Feeds into the <em>major</em> judgement.</td></tr>
+    <tr><td>priority</td><td>1–4. Processing order when the shared budget is tight, so an official announcement is never starved by an aggregator.</td></tr>
+    <tr><td>topicFilter</td><td>A keyword regex for multi-topic feeds, so a general tech feed doesn't dilute the timeline with unrelated posts.</td></tr>
+    <tr><td>maxPerRun</td><td>Aggregate search feeds return 100 items each. Without a cap, one publisher would crowd out every other source.</td></tr>
+    <tr><td>stripPublisherSuffix</td><td>Google News titles arrive as "Headline - Publisher". That suffix showed in the UI <em>and</em> defeated near-duplicate detection, because the same story from two publishers no longer looked alike.</td></tr>
+    <tr><td>deriveSourceFromTitle</td><td>Credits the real publisher — Reuters, The Verge — instead of labelling dozens of posts with one aggregator's name.</td></tr>
+  </table>
+
+  <h3>One run, step by step</h3>
+  <ol class="steps">
+    <li><b>Trigger</b> An external scheduler calls <code>GET /ingest?key=…</code> hourly. The endpoint returns immediately rather than awaiting the run, because a full pass takes minutes and most schedulers time out long before that — reporting failures for runs that actually succeeded.</li>
+    <li><b>Overlap guard</b> A flag rejects a second run while one is in progress. Without it, a slow run overlapping the next trigger would spend the same daily budget twice.</li>
+    <li><b>Budget</b> One shared allowance of 20 summaries for the whole run, spent in priority order. Per-source caps alone, across 43 sources, would multiply well past the free tier.</li>
+    <li><b>Fetch</b> Each source's graph pulls its feed with a polite bot User-Agent — several publishers reject requests without one.</li>
+    <li><b>Filter</b> Items older than 7 days are dropped, the topic regex is applied, and at most 3 items per source per run survive.</li>
+    <li><b>Dedupe, layer one</b> The URL is checked against Redis, where every ingested URL is remembered for 30 days. Exact repeats stop here, costing nothing.</li>
+    <li><b>Dedupe, layer two</b> The headline is compared against the last 3 days of stored titles by significant-word overlap. Above 0.65 similarity it is treated as the same story — this is what stops one announcement appearing five times under five mastheads.</li>
+    <li><b>Summarise and classify</b> One Gemini call per surviving item produces both the plain-language summary and the <em>major</em> judgement together. Combining them halves the call count.</li>
+    <li><b>Pace</b> 4.5 seconds between summaries, keeping the run under the model's per-minute limit. The daily limit is handled separately.</li>
+    <li><b>Store</b> The post is written with its source, tier, summary and major flag. The URL is unique in the schema, so a duplicate that slips through both layers is still rejected by the database.</li>
+  </ol>
+
+  <div class="box">
+    <h4>Why the schedule lives outside the application</h4>
+    <p style="margin:0">
+      There is an in-process hourly cron, and it is not the one that matters. A free Render
+      instance sleeps after about 15 minutes of inactivity, and a sleeping process cannot run
+      its own schedule. The external trigger is what actually keeps the feed fresh; the internal
+      one covers local development and any host that stays warm. Both call the same code path,
+      so they cannot drift apart.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>5 · The AI budget</h2>
+  <p class="lede">
+    Gemini's free tier caps requests per day as well as per minute. Nothing in a normal web
+    architecture accounts for a dependency that simply stops answering two-thirds of the way
+    through a Tuesday.
+  </p>
+
+  <h3>The accounting</h3>
+  <table>
+    <tr><th>Limit</th><th>Value</th><th>Reasoning</th></tr>
+    <tr><td>Daily ceiling</td><td>800 calls</td><td>Deliberately under the real free-tier cap, so the app stops itself with headroom instead of discovering the limit by hitting it.</td></tr>
+    <tr><td>Ingestion ceiling</td><td>600 calls</td><td>Background work is cut off first.</td></tr>
+    <tr><td>Reserved</td><td>200 calls</td><td>Kept for user-triggered "Read more". <strong>A background job must never be the reason a person tapping a button gets an error.</strong></td></tr>
+    <tr><td>Per run</td><td>20 summaries</td><td>24 hourly runs × 20 = 480 worst case, comfortably inside 600.</td></tr>
+    <tr><td>Pacing</td><td>4.5s between calls</td><td>Keeps a run under the per-minute limit.</td></tr>
+  </table>
+
+  <h3>Three details that matter more than they look</h3>
+  <p>
+    <strong>It increments, then compares.</strong> The counter is incremented first and the result
+    checked afterwards, so two concurrent callers cannot both be told yes for the same final slot.
+    Checking first and incrementing after is the classic version of this bug.
+  </p>
+  <p>
+    <strong>It fails open.</strong> If Redis is unreachable the call is allowed. Redis being down
+    should not take the product down with it; the per-minute pacing and per-run caps still apply,
+    so the worst case is a day that runs closer to the true ceiling.
+  </p>
+  <p>
+    <strong>The key is the UTC date.</strong> It matches how Google resets the quota, and carries a
+    48-hour expiry so it cleans up after itself.
+  </p>
+
+  <div class="box note">
+    <h4>The endpoint that spends money</h4>
+    <p style="margin:0">
+      <code>GET /feed/:id/detail</code> is public, and a post without a cached breakdown triggers a
+      model call. Left unguarded, anyone could walk the post IDs and burn the entire daily budget
+      in minutes — stopping ingestion and breaking "Read more" for every real reader until the UTC
+      day rolled over. It is rate limited at 30 requests per 15 minutes per address: generous for
+      someone genuinely reading, useless for draining a 600-call reserve. Results are cached in the
+      database permanently, so each post costs at most one call ever.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>6 · The reading path</h2>
+  <p class="lede">What actually happens between opening the app and seeing stories.</p>
+
+  <ol class="steps">
+    <li><b>The shell loads</b> A static bundle from the CDN. It immediately asks the API who the visitor is.</li>
+    <li><b>Session check</b> <code>GET /auth/me</code> with the stored token. Until it answers, a loader shows — the app never renders a signed-out view to someone who turns out to be signed in.</li>
+    <li><b>First page</b> <code>GET /feed?limit=20</code>. Ordered newest first.</li>
+    <li><b>Scroll</b> An IntersectionObserver on a sentinel element near the bottom triggers the next page — no "load more" button.</li>
+    <li><b>Next page</b> The cursor is the last row's <code>publishedAt</code> <em>and</em> its <code>id</code>.</li>
+    <li><b>Layout</b> The masonry directive measures each card and assigns a row span, so cards pack upward within their column instead of every card in a row waiting for the tallest.</li>
+  </ol>
+
+  <h3>Why the cursor needs two halves</h3>
+  <p>
+    Paging on a timestamp alone assumes timestamps are unique. They are not: publishers post in
+    batches, and several sources supply only a date, so ties are routine. With
+    <code>publishedAt &lt; before</code>, every tied row straddling a page boundary either
+    disappeared or repeated — silently, with no error anywhere. The reader simply never saw those
+    stories. The fix adds the ID as a tiebreak to both the cursor <em>and</em> the ordering, since a
+    tiebreak the sort does not share is no tiebreak at all.
+  </p>
+  <pre>WHERE  publishedAt &lt; :before
+   OR (publishedAt = :before AND id &lt; :beforeId)
+ORDER BY publishedAt DESC, id DESC</pre>
+
+  <h3>Read endpoints</h3>
+  <table>
+    <tr><th>Endpoint</th><th>Purpose</th></tr>
+    <tr><td>GET /feed</td><td>Paged feed. Also serves search (<code>q</code>) and date-jump (<code>date</code>); source filter applies to all three.</td></tr>
+    <tr><td>GET /feed/sources</td><td>Distinct source names, for the filter checkboxes.</td></tr>
+    <tr><td>GET /feed/trending</td><td>This week's major-flagged posts, newest first, capped at 6.</td></tr>
+    <tr><td>GET /feed/has-updates</td><td>Whether anything arrived since a timestamp — powers the "new stories" nudge without refetching the feed.</td></tr>
+    <tr><td>GET /feed/:id/detail</td><td>The long breakdown. Cached after first generation; rate limited.</td></tr>
+  </table>
+
+  <h3>How "Read more" is grounded</h3>
+  <p>
+    The explainer does not work from the headline alone. It fetches the original article, strips the
+    HTML to text, truncates to 8,000 characters and hands that to the model as grounding — with an
+    8-second timeout, after which it degrades to explaining from the title and summary rather than
+    failing. A breakdown built from real article text is substantially better than one imagined from
+    a headline, and the timeout means a slow publisher costs a worse answer, not an error.
+  </p>
+</section>
+
+<section>
+  <h2>7 · Accounts and mail</h2>
+  <p class="lede">Two ways in, one session format, and email that has to actually arrive.</p>
+
+  <h3>Two sign-in paths</h3>
+  <p>
+    <strong>Google Sign-In</strong> verifies the Google ID token server-side and creates or finds the
+    user. There is no client secret because this is the browser-side Google Identity flow — the
+    client ID identifies the app, and the token's signature is what proves the claim.
+    <strong>Email and password</strong> uses bcrypt, with passwords capped at 72 bytes because bcrypt
+    silently truncates beyond that — without the cap, two different long passwords sharing a prefix
+    would hash identically.
+  </p>
+
+  <h3>Sessions</h3>
+  <p>
+    Both paths issue the same JWT, valid 30 days, returned two ways: as an httpOnly cookie
+    <em>and</em> in the response body. The duplication is deliberate. The API and the web app live on
+    different <code>onrender.com</code> subdomains, and that domain is on the public suffix list — so
+    the cookie is genuinely third-party there, which Safari and every iOS browser drop outright. The
+    body token is stored and sent as a Bearer header, which works regardless. The cookie remains the
+    preferred path where browsers still honour it, and it is what the email-verification redirect
+    depends on, since a link click is a plain navigation with no JavaScript to attach a header.
+  </p>
+
+  <h3>Token lifetimes</h3>
+  <table>
+    <tr><th>Token</th><th>Lifetime</th><th>Why</th></tr>
+    <tr><td>Session JWT</td><td>30 days</td><td>Long enough that a casual reader is not asked to sign in repeatedly.</td></tr>
+    <tr><td>Verification</td><td>24 hours</td><td>Enough to survive a spam folder and a night's sleep.</td></tr>
+    <tr><td>Password reset</td><td>1 hour</td><td>Deliberately shorter: a reset link is a live credential for taking over an account, so it should expire well before a signup link would.</td></tr>
+  </table>
+
+  <h3>Where verification links must point</h3>
+  <p>
+    The link in a verification email goes to the <em>API</em>, not the web app. This is not obvious and
+    was originally wrong: a link built from the web origin loaded the single-page app, matched no route,
+    and fell through to the home page — so the token was never consumed while the user watched a
+    successful-looking redirect. The API consumes the token, then redirects to the web app.
+  </p>
+
+  <h3>Anti-enumeration</h3>
+  <p>
+    <code>forgot-password</code> and <code>resend-verification</code> return an identical response
+    whether or not the account exists, whether or not it is already verified, and whether or not the
+    mail send succeeded. Otherwise either endpoint becomes a tool for discovering who is registered.
+    The consequence is that a genuine send failure is invisible to the user by design — so it is
+    logged instead, and <code>/health/mail</code> exists to check the mail path directly.
+  </p>
+</section>
+
+<section>
+  <h2>8 · Data model</h2>
+  <p class="lede">Three tables. The schema is small on purpose.</p>
+
+  <table>
+    <tr><th>Post</th><th></th></tr>
+    <tr><td>id</td><td>cuid</td></tr>
+    <tr><td>source, sourceTier</td><td>Display name and 1/2 tier</td></tr>
+    <tr><td>title, url, summary</td><td><code>url</code> is unique — the last line of defence against duplicates</td></tr>
+    <tr><td>isMajor</td><td>Set at ingestion by the classifier; drives highlighting and trending</td></tr>
+    <tr><td>publishedAt, createdAt</td><td>Publication time versus ingestion time — the feed sorts on the former</td></tr>
+    <tr><td>detailBreakdown</td><td>Nullable. The cached "Read more" text, written on first request</td></tr>
+  </table>
+
+  <table>
+    <tr><th>User</th><th></th></tr>
+    <tr><td>googleId</td><td>Nullable and unique. Postgres permits many NULLs in a unique index, so password-only users coexist fine</td></tr>
+    <tr><td>email</td><td>Unique, normalised before storage</td></tr>
+    <tr><td>passwordHash</td><td>Nullable — a Google-only account has no password, which is why password reset is a deliberate no-op for them</td></tr>
+    <tr><td>emailVerified</td><td>Gates email/password login</td></tr>
+    <tr><td>verificationToken, resetToken</td><td>Both unique and both expiring; consumed on use so links cannot be replayed</td></tr>
+  </table>
+
+  <table>
+    <tr><th>SavedPost</th><th></th></tr>
+    <tr><td>userId, postId</td><td>Unique together — saving twice is idempotent</td></tr>
+    <tr><td>cascade</td><td>On both sides: deleting a user drops their saved list, deleting a post drops the now-dangling bookmarks</td></tr>
+  </table>
+
+  <p>
+    Indexes exist on <code>publishedAt</code> (every feed query sorts by it) and <code>isMajor</code>
+    (trending). Migrations are tracked in the repo — six to date, from the initial schema through
+    user accounts, saved posts and password reset.
+  </p>
+</section>
+
+<section>
+  <h2>9 · Security posture</h2>
+  <p class="lede">What is actually defended, and by what.</p>
+
+  <table>
+    <tr><th>Concern</th><th>Defence</th></tr>
+    <tr><td>Password guessing</td><td>10 attempts per endpoint per address per 15 minutes. Keyed per endpoint, so a burst of signups cannot lock the same person out of logging in.</td></tr>
+    <tr><td>Account enumeration</td><td>Identical responses from the reset and resend endpoints regardless of outcome.</td></tr>
+    <tr><td>Password storage</td><td>bcrypt, minimum 8 characters, capped at 72 bytes.</td></tr>
+    <tr><td>Budget exhaustion</td><td>The one endpoint that spends money is rate limited and permanently caches its output.</td></tr>
+    <tr><td>Third-party cookies</td><td>Bearer token fallback, so auth does not depend on a browser policy.</td></tr>
+    <tr><td>XSS from model output</td><td>Model text is rendered through Angular interpolation, which escapes by default. There is no <code>innerHTML</code> anywhere in the app.</td></tr>
+    <tr><td>Unauthorised ingestion</td><td>A rotatable shared secret. It grants only "fetch the news early", which is why accepting it in a query string was an acceptable trade for a trigger that schedulers can actually call.</td></tr>
+    <tr><td>Secrets in the repo</td><td><code>.env</code> is gitignored; a documented <code>.env.example</code> carries names only.</td></tr>
+  </table>
+
+  <div class="box note">
+    <h4>The subtle one: what a rate limit is keyed on</h4>
+    <p style="margin:0">
+      Rate limiting is only as good as its bucket key, and this is where it silently failed for the
+      entire life of the deployment. Render fronts services with Cloudflare, so requests arrive having
+      crossed three hops — client, Cloudflare edge, Render's internal router. Express, configured to
+      trust one proxy, resolved the caller to that internal address, which varies between requests. Every
+      request landed in its own fresh bucket. Fourteen consecutive password-reset attempts against
+      production all succeeded; thirty-three consecutive detail requests all succeeded. The guard was
+      present in code review and did nothing at runtime — the worst way for a security control to fail.
+      It now keys on <code>cf-connecting-ip</code>, which Cloudflare overwrites and a client therefore
+      cannot forge, and both limits were re-tested against production until they returned 429.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>10 · Deployment and operations</h2>
+
+  <h3>Topology</h3>
+  <table>
+    <tr><th>Service</th><th>Type</th><th>Notes</th></tr>
+    <tr><td>ai-pulse-api</td><td>Render web service, free</td><td>Blueprint in <code>render.yaml</code>. Sleeps after ~15 minutes idle.</td></tr>
+    <tr><td>current-3wkv</td><td>Render static site, free</td><td>No rewrite rule needed — the build copies <code>index.html</code> to <code>404.html</code>, so deep links work as part of the build rather than as dashboard configuration.</td></tr>
+    <tr><td>Scheduler</td><td>External cron</td><td>Hourly <code>GET /ingest?key=…</code></td></tr>
+  </table>
+
+  <h3>The three health endpoints</h3>
+  <p>
+    Each exists because a specific class of problem was, at some point, only diagnosable by reading logs.
+  </p>
+  <table>
+    <tr><th>Endpoint</th><th>Answers</th></tr>
+    <tr><td>/health/config</td><td>Which environment variables are set (booleans only — never values), which commit is serving, and today's AI spend. The commit field distinguishes "the fix has not deployed yet" from "the fix did not work", which otherwise look identical.</td></tr>
+    <tr><td>/health/mail</td><td>Whether the mail key <em>works</em> — it asks the provider rather than checking that a variable is non-empty. Returns a truncated hash of the running key so two deployments can be compared without exposing it.</td></tr>
+    <tr><td>/health/ip</td><td>What the server resolves the caller to. Reflects the requester back at themselves, and turns "is rate limiting working" into one request instead of an inference.</td></tr>
+  </table>
+
+  <h3>Continuous integration</h3>
+  <p>
+    GitHub Actions builds both workspaces on every push and pull request. It deliberately builds rather
+    than tests: there is no meaningful suite yet, and a green check that only ran <code>echo</code> would
+    be worse than none. Both builds do catch the class of mistake that has actually reached production
+    here — a type error, or a template calling a method that does not exist.
+  </p>
+</section>
+
+<section>
+  <h2>11 · Production failure log</h2>
+  <p class="lede">
+    Five failures, all found in production, none by reading the code. They are recorded because the
+    pattern they share is more useful than any of them individually.
+  </p>
+
+  <div class="box avoid">
+    <h4>1 · Mail that never left the building</h4>
+    <p>
+      Verification emails silently failed with <code>ENETUNREACH</code> on an IPv6 address. Three causes
+      stacked: Render instances have no IPv6 route; the mail library resolves hostnames itself and picks
+      from the combined A and AAAA results <em>at random</em>, so the standard Node fix could not reach it;
+      and underneath both, Render blocks outbound SMTP ports entirely on free services, so no SMTP client
+      could ever have worked. Each fix revealed the next.
+    </p>
+    <p style="margin:0"><strong>Resolution:</strong> mail moved to an HTTP API on port 443.</p>
+  </div>
+
+  <div class="box avoid">
+    <h4>2 · A verification link that verified nothing</h4>
+    <p>
+      The link pointed at the web app, which has no matching route. Clicking it loaded the app, matched
+      nothing, and landed on the home page — a successful-looking redirect that consumed no token, so the
+      account stayed unverified and the user could not log in.
+    </p>
+    <p style="margin:0"><strong>Resolution:</strong> build the link from the API's own origin, and report that origin in <code>/health/config</code> so a wrong one is visible without sending mail to find out.</p>
+  </div>
+
+  <div class="box avoid">
+    <h4>3 · Rate limiting that never limited</h4>
+    <p>
+      Described in section 9. Present in the code, keyed on an address that changed every request,
+      therefore inert — for the entire life of the deployment, on the endpoints that guard credentials.
+    </p>
+    <p style="margin:0"><strong>Resolution:</strong> key on the Cloudflare-supplied client address, then re-test against production until it actually returned 429.</p>
+  </div>
+
+  <div class="box avoid">
+    <h4>4 · Pagination that lost stories</h4>
+    <p>
+      A cursor on <code>publishedAt</code> alone dropped every tied row that straddled a page boundary.
+      No error, no log line — readers just never saw those posts.
+    </p>
+    <p style="margin:0"><strong>Resolution:</strong> a composite <code>(publishedAt, id)</code> keyset cursor, verified by checking two live pages for overlap and gaps.</p>
+  </div>
+
+  <div class="box avoid">
+    <h4>5 · Navigation that looked interactive</h4>
+    <p>
+      The sidebar's Feed item rendered as a nav item and highlighted itself as active, but had no link and
+      no click handler — so the account page had no way back. Separately, sign-out cleared the user only
+      after the network round-trip, so the app rendered the feed for the length of that request before
+      bouncing to the login page.
+    </p>
+    <p style="margin:0"><strong>Resolution:</strong> a real router link, and clearing session state synchronously so the redirect happens on the same tick.</p>
+  </div>
+
+  <div class="box note">
+    <h4>The pattern</h4>
+    <p style="margin:0">
+      Four of these five looked correct in the source. They were controls and links that existed, compiled,
+      and did nothing — and every one was found by exercising the deployed system rather than by reading it.
+      The health endpoints and the production verification steps described throughout this document are the
+      direct response: the goal is that "configured" and "working" can always be told apart by one request.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2>12 · Limits and what comes next</h2>
+
+  <h3>Known limits</h3>
+  <table>
+    <tr><th>Limit</th><th>When it will matter</th></tr>
+    <tr><td>Search is <code>ILIKE '%q%'</code></td><td>Unindexable, so it is a full scan. Fine at hundreds of rows; wants Postgres full-text search at tens of thousands.</td></tr>
+    <tr><td>Single-instance assumptions</td><td>Rate limit buckets, the in-process cron and the overlap guard all live in memory. Correct on one instance; scaling out would double-spend the AI budget and halve the effective rate limit. Moving them to Redis is the fix.</td></tr>
+    <tr><td>Cold starts</td><td>A free instance sleeps after ~15 minutes, and the next visitor waits roughly 50 seconds. Mitigated by a keep-warm ping; removed entirely by a paid instance.</td></tr>
+    <tr><td>Test coverage</td><td>CI builds both apps, which catches type and template errors — but nothing yet catches "deployed and silently inert", which is precisely the failure mode this project keeps producing.</td></tr>
+    <tr><td>Mail deliverability</td><td>Mail is DKIM-signed by the relay rather than the sending domain, so a share of it is filed as spam. A verified custom domain would fix it properly.</td></tr>
+    <tr><td>No error tracking</td><td>Diagnosis means reading host logs by hand.</td></tr>
+  </table>
+
+  <h3>Where the next effort belongs</h3>
+  <ol>
+    <li><strong>Integration tests against a running instance.</strong> Every failure in section 11 would have been caught by one. This is the single highest-value addition to the project.</li>
+    <li><strong>Error tracking.</strong> Swallowed-and-logged failures are invisible until someone goes looking.</li>
+    <li><strong>Full-text search</strong> before the post count makes the current approach visibly slow.</li>
+    <li><strong>Redis-backed rate limiting</strong> whenever a second instance becomes plausible.</li>
+  </ol>
+
+  <div class="box" style="margin-top: 8mm;">
+    <p style="margin:0; color: var(--muted); font-size: 9pt;">
+      Current — architecture blueprint, version 1.0, 7 September 2026. Generated from the repository at
+      commit <code>7a0dcec</code>. Every figure in this document was read from the code rather than
+      recalled, and every production claim was verified against the live deployment.
+    </p>
+  </div>
+</section>
+
+</body>
+</html>
