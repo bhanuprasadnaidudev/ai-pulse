@@ -67,7 +67,12 @@ $mobile: 700px;
   flex-direction: column;
   gap: t.$space-lg;
   transition: width $anim;
-  overflow: hidden;
+  // No overflow: hidden here. It was clipping the layout panel, which is
+  // absolutely positioned inside this element: in the 72px rail the panel
+  // is ~116px wide, so on any phone only the first of its three layout
+  // buttons was reachable. Nothing else needs the sidebar to clip -- the
+  // two things that animate away on collapse, .logo and .nav-label, each
+  // clip themselves with their own overflow: hidden.
 
   &.collapsed {
     @include rail-mode;
