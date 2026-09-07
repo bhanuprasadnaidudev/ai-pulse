@@ -48,6 +48,18 @@ $anim: 0.2s ease;
   font-size: 20px;
   white-space: nowrap;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// Stays put when the sidebar collapses -- the wordmark beside it is what
+// animates away, leaving the mark alone in the rail.
+.logo-mark {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: t.$acid;
 }
 
 // Always in the DOM -- collapsing animates opacity/width instead of the

@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { buildSourceAgentGraph } from './agents/source-agent.graph.js';
+import { buildSourceAgentGraph, createRunBudget } from './agents/source-agent.graph.js';
 import { RssService } from './rss.service.js';
 import { DedupeService } from './dedupe.service.js';
 import { SummarizeService } from './summarize.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { FEED_SOURCES } from './sources.js';
+import { sourcesByPriority } from './sources.js';
 
 const logger = new Logger('IngestionScheduler');
 
@@ -36,10 +36,14 @@ export class IngestionSchedulerService {
   async runScheduledIngest() {
     logger.log('Scheduled ingestion run starting...');
     const results: Record<string, number> = {};
+    // One budget for the whole run, spent in priority order -- with ~40
+    // sources the per-source caps alone would multiply well past the free
+    // Gemini tier, and official announcements should get first call on it.
+    const budget = createRunBudget();
 
-    for (const source of FEED_SOURCES) {
+    for (const source of sourcesByPriority()) {
       try {
-        const graph = buildSourceAgentGraph(source, this.rss, this.dedupe, this.summarize, this.prisma);
+        const graph = buildSourceAgentGraph(source, this.rss, this.dedupe, this.summarize, this.prisma, { budget });
         const result = await graph.invoke({ items: [], processed: 0 });
         results[source.name] = result.processed;
       } catch (err) {

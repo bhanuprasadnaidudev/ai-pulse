@@ -2,8 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
+import { logMissingConfig } from './config-check.js';
 
 async function bootstrap() {
+  // Before anything else, so a misconfigured deploy says so at the top of
+  // its own logs rather than only failing later, deep inside a request.
+  logMissingConfig();
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // In production every request arrives through Render's proxy, so without

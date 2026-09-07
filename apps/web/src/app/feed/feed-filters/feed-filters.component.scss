@@ -15,6 +15,14 @@
   display: block;
   background: t.$bg;
   padding-bottom: t.$space-sm;
+  // Once stuck, this element's own top edge is the viewport's top edge, so
+  // without padding of its own the buttons jam right against it -- and
+  // cards scrolling past showed through the gap above them. The negative
+  // margin cancels the padding in the resting layout, so nothing moves
+  // until it actually sticks; then the padding becomes a clean band of
+  // page background between the top of the screen and the controls.
+  padding-top: t.$space-md;
+  margin-top: calc(-1 * #{t.$space-md});
 }
 
 .filters-bar {

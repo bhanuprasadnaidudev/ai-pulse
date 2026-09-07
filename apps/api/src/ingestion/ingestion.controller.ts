@@ -7,12 +7,12 @@ import {
   Query,
   UnauthorizedException,
 } from '@nestjs/common';
-import { buildSourceAgentGraph } from './agents/source-agent.graph.js';
+import { buildSourceAgentGraph, createRunBudget } from './agents/source-agent.graph.js';
 import { RssService } from './rss.service.js';
 import { DedupeService } from './dedupe.service.js';
 import { SummarizeService } from './summarize.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { FEED_SOURCES } from './sources.js';
+import { FEED_SOURCES, sourcesByPriority } from './sources.js';
 
 function toSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -29,20 +29,28 @@ export class IngestionController {
 
   /** Runs every source's agent in sequence (shared Gemini quota -- no benefit to parallel). */
   @Post()
-  async runAll(@Headers('authorization') auth: string | undefined, @Query('days') days?: string) {
+  async runAll(
+    @Headers('authorization') auth: string | undefined,
+    @Query('days') days?: string,
+    @Query('budget') budgetParam?: string,
+  ) {
     this.assertAuthorized(auth);
     const maxItemAgeDays = this.parseDays(days);
+    // Shared across the whole run and spent in priority order -- see
+    // createRunBudget. Overridable for a deliberate one-off backfill.
+    const budget = createRunBudget(budgetParam ? (parseInt(budgetParam, 10) || undefined) : undefined);
 
     const results: Record<string, number> = {};
-    for (const source of FEED_SOURCES) {
+    for (const source of sourcesByPriority()) {
       const graph = buildSourceAgentGraph(source, this.rss, this.dedupe, this.summarize, this.prisma, {
         maxItemAgeDays,
+        budget,
       });
       const result = await graph.invoke({ items: [], processed: 0 });
       results[source.name] = result.processed;
     }
 
-    return { ok: true, results };
+    return { ok: true, budgetRemaining: budget.remaining, results };
   }
 
   /** One-off backfill: re-judges MAJOR on already-ingested posts using the
