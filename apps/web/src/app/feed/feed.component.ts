@@ -6,6 +6,7 @@ import { FeedFiltersComponent } from './feed-filters/feed-filters.component';
 import { FeedLayoutService, FeedLayout } from './feed-layout.service';
 import { FeedService, FeedPost, TrendingPost } from './feed.service';
 import { SavedService } from '../saved/saved.service';
+import { MasonryDirective } from './masonry.directive';
 
 const POLL_INTERVAL_MS = 3 * 60 * 1000;
 const PAGE_SIZE = 20;
@@ -13,7 +14,7 @@ const PAGE_SIZE = 20;
 @Component({
   selector: 'app-feed',
   standalone: true,
-  imports: [CommonModule, PostDetailModalComponent, FeedFiltersComponent],
+  imports: [CommonModule, PostDetailModalComponent, FeedFiltersComponent, MasonryDirective],
   templateUrl: './feed.component.html',
   styleUrl: './feed.component.scss',
 })

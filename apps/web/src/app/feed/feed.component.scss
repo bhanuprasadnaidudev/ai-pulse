@@ -96,12 +96,16 @@
 .posts.layout-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: t.$space-md;
-  // Each card keeps its own height instead of stretching to match the
-  // tallest in its row: a short summary next to a long one was being
-  // padded out with dead space to match, which read as a fixed card
-  // height. Rows can end unevenly -- that's the intended masonry-ish
-  // look, and only the flow direction (left-to-right) was ever the bug.
+  // Masonry: many small row tracks, with each card spanning as many as its
+  // own height needs (set by MasonryDirective). That's what lets a card
+  // start directly under the one above it in its column, instead of every
+  // card in a row waiting for the tallest one to finish and leaving a
+  // band of dead space. Vertical spacing is baked into each card's span,
+  // so row-gap stays 0 -- a row-gap here would apply between every one of
+  // the tiny tracks a card spans, not between the cards.
+  grid-auto-rows: 4px; // must match ROW_UNIT_PX in masonry.directive.ts
+  column-gap: t.$space-md;
+  row-gap: 0;
   align-items: start;
 
   @media (min-width: 700px) {

@@ -29,7 +29,12 @@
   }
 
   @if (loading()) {
-    <div class="posts" [class.layout-grid]="layoutMode() === 'grid'" [class.layout-timeline]="layoutMode() !== 'grid'">
+    <div
+      class="posts"
+      [appMasonry]="layoutMode() === 'grid'"
+      [class.layout-grid]="layoutMode() === 'grid'"
+      [class.layout-timeline]="layoutMode() !== 'grid'"
+    >
       @for (card of skeletonCards; track $index) {
         <div class="skeleton-card">
           <div class="skeleton-line short"></div>
@@ -64,6 +69,7 @@
   } @else {
     <div
       class="posts"
+      [appMasonry]="layoutMode() === 'grid'"
       [class.layout-grid]="layoutMode() === 'grid'"
       [class.layout-timeline]="layoutMode() !== 'grid'"
       [class.focus-mode]="layoutMode() === 'focus'"
