@@ -161,6 +161,19 @@
     &:hover {
       transform: rotate(-1deg) translate(-2px, -2px);
     }
+
+    // Straight on phones. A rotated box occupies W*cos(a) + H*sin(a), so at
+    // one column -- where the card is the full width of the content area --
+    // a 350px-tall card sticks about 6px past its own column and pushes the
+    // whole page into horizontal scroll. The tilt is a flourish that only
+    // works when there is gutter either side of the card to absorb it.
+    @media (max-width: 699px) {
+      transform: none;
+
+      &:hover {
+        transform: translate(-2px, -2px);
+      }
+    }
   }
 }
 
