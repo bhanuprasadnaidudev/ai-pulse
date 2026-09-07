@@ -7,8 +7,8 @@ const REQUIRED_ENV = [
   ['JWT_SECRET', 'issuing sessions -- every login and Google sign-in returns 500'],
   ['GOOGLE_CLIENT_ID', 'Google sign-in -- tokens are rejected without it'],
   ['WEB_APP_URL', 'links in verification emails, and the redirect back after verifying'],
-  ['GMAIL_USER', 'sending verification emails'],
-  ['GMAIL_APP_PASSWORD', 'sending verification emails'],
+  ['GMAIL_USER', 'the from address on verification and reset emails'],
+  ['BREVO_API_KEY', 'sending verification and password-reset emails'],
 ] as const;
 
 export type ConfigStatus = Record<string, boolean>;

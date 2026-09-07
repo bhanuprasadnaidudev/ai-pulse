@@ -1,80 +1,33 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { promises as dns } from 'node:dns';
-import nodemailer from 'nodemailer';
 
 const logger = new Logger('MailService');
 
-const SMTP_HOST = 'smtp.gmail.com';
+const BREVO_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
 
-// Gmail SMTP via a dedicated account's App Password, not a transactional-
-// email vendor (Resend/Brevo/SendGrid) -- researched and deliberate, not a
-// shortcut. Both of those require a paid, owned, DNS-verified domain to
-// reliably deliver to a stranger's inbox for free: Resend's free sandbox
-// sender is hard-blocked from sending to anyone but the account owner
-// until a domain is verified, and Brevo's free tier can silently fail to
-// reach Gmail/Yahoo/Outlook recipients specifically without one (2024+
-// bulk-sender authentication rules), which is worse than a hard error
-// since the app would believe the send succeeded. Real Gmail
-// infrastructure, by contrast, is already trusted by other mail providers
-// and needs no domain of its own -- free up to 500 emails/day, far more
-// than this app will ever send. Trade-off: mail arrives from
-// `<GMAIL_USER>@gmail.com`, not a branded address -- cosmetic, not
-// functional, and the actual price of staying free.
+// Brevo's HTTP API, over plain HTTPS on 443.
+//
+// This used to be Gmail SMTP with a dedicated account's App Password, and
+// that was the right call at the time: real Gmail infrastructure is
+// already trusted by other providers and needs no domain of its own,
+// where Resend and SendGrid both want a paid, DNS-verified domain before
+// they'll deliver to a stranger's inbox. What killed it was the host, not
+// the design -- Render blocked outbound traffic to ports 25, 465 and 587
+// on free web services in September 2025, so the connection now times out
+// at their edge and no SMTP client of any kind can get out. Sending over
+// 443 sidesteps the whole category: a blocked SMTP port can't affect a
+// request that isn't using one.
+//
+// Free tier is 300 emails/day, far more than this app sends, and Brevo
+// verifies a single sender address, so GMAIL_USER still works as the from
+// address without owning a domain. The cost is that mail is relayed by
+// Brevo rather than sent by Gmail: DKIM signs as Brevo, not gmail.com, so
+// it can land in spam more readily than it used to. That is the price of
+// the free tier here, and it's a filing problem rather than a delivery
+// failure.
 @Injectable()
 export class MailService {
-  private transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
-
-  /** Nodemailer resolves the hostname itself -- dns.resolve4 and
-   * dns.resolve6, concatenated -- and then picks one of the results AT
-   * RANDOM (see formatDNSValue in nodemailer/shared). That is why setting
-   * Node's ipv4first lookup order wasn't enough: this path never calls
-   * dns.lookup, so the order setting has nothing to steer. Render
-   * instances have no IPv6 route out, so a send that drew Gmail's AAAA
-   * address died with `connect ENETUNREACH 2607:f8b0:...:587` -- and
-   * because the pick is random, it failed unpredictably rather than
-   * consistently, which is the worst way for this to break.
-   *
-   * Resolving an IPv4 address here and handing that over instead
-   * takes the coin flip out of it. tls.servername keeps the certificate
-   * validated against smtp.gmail.com rather than the bare IP, which is
-   * what makes passing an address safe. Built once and reused: Google's
-   * SMTP addresses rotate slowly, and a free Render instance restarts far
-   * more often than they do. */
-  private async getTransporter(): Promise<ReturnType<typeof nodemailer.createTransport>> {
-    if (this.transporter) return this.transporter;
-
-    // dns.lookup, not dns.resolve4: lookup goes through getaddrinfo and so
-    // honours the OS resolver, hosts file and search domains, and works in
-    // sandboxes where direct queries to port 53 are refused. If it fails
-    // anyway, fall back to the hostname -- that puts us back to the random
-    // pick, which at least sometimes works, rather than sending nothing.
-    let host = SMTP_HOST;
-    try {
-      host = (await dns.lookup(SMTP_HOST, { family: 4 })).address;
-    } catch (err) {
-      logger.warn(`Could not resolve an IPv4 address for ${SMTP_HOST}, falling back to the hostname: ${(err as Error).message}`);
-    }
-
-    this.transporter = nodemailer.createTransport({
-      host,
-      port: 587,
-      secure: false, // STARTTLS on 587, not implicit TLS
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-      tls: { servername: SMTP_HOST },
-    });
-    return this.transporter;
-  }
-
   async sendVerificationEmail(to: string, name: string, verifyUrl: string): Promise<void> {
-    const transporter = await this.getTransporter();
-    await transporter.sendMail({
-      from: `"Current" <${process.env.GMAIL_USER}>`,
-      to,
-      subject: 'Verify your email for Current',
-      html: `
+    await this.send(to, name, 'Verify your email for Current', `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
           <h2 style="margin: 0 0 16px;">Hi ${escapeHtml(name)},</h2>
           <p style="color: #444; line-height: 1.6;">
@@ -89,8 +42,7 @@ export class MailService {
             This link expires in 24 hours. If you didn't sign up for Current, you can ignore this email.
           </p>
         </div>
-      `,
-    });
+      `);
   }
 
   /** resendVerification (and signup) intentionally never let a mail-send
@@ -106,12 +58,7 @@ export class MailService {
   }
 
   async sendPasswordResetEmail(to: string, name: string, resetUrl: string): Promise<void> {
-    const transporter = await this.getTransporter();
-    await transporter.sendMail({
-      from: `"Current" <${process.env.GMAIL_USER}>`,
-      to,
-      subject: 'Reset your Current password',
-      html: `
+    await this.send(to, name, 'Reset your Current password', `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
           <h2 style="margin: 0 0 16px;">Hi ${escapeHtml(name)},</h2>
           <p style="color: #444; line-height: 1.6;">
@@ -127,8 +74,7 @@ export class MailService {
             you can ignore this email -- your password won't change.
           </p>
         </div>
-      `,
-    });
+      `);
   }
 
   /** Same reasoning as sendVerificationEmailSafely: requestPasswordReset
@@ -139,6 +85,42 @@ export class MailService {
       await this.sendPasswordResetEmail(to, name, resetUrl);
     } catch (err) {
       logger.warn(`Failed to send password reset email to ${to}: ${(err as Error).message}`);
+    }
+  }
+
+  /** Brevo answers a rejected send with 4xx and a JSON body naming the
+   * reason -- an unverified sender, an exhausted daily quota, a bad key.
+   * That body is the single most useful thing when mail stops arriving,
+   * and the callers above only ever log `err.message`, so it gets folded
+   * into the thrown error rather than dropped. */
+  private async send(to: string, name: string, subject: string, htmlContent: string): Promise<void> {
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) throw new Error('BREVO_API_KEY is not set');
+
+    // Falls back to GMAIL_USER, which is already set to the address being
+    // verified with Brevo -- one fewer variable to keep in sync, and
+    // MAIL_FROM is there for when the app outgrows a gmail.com sender.
+    const from = process.env.MAIL_FROM ?? process.env.GMAIL_USER;
+    if (!from) throw new Error('neither MAIL_FROM nor GMAIL_USER is set');
+
+    const res = await fetch(BREVO_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'content-type': 'application/json',
+        accept: 'application/json',
+      },
+      body: JSON.stringify({
+        sender: { email: from, name: 'Current' },
+        to: [{ email: to, name }],
+        subject,
+        htmlContent,
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => '<unreadable>');
+      throw new Error(`Brevo returned ${res.status}: ${body}`);
     }
   }
 }

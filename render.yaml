@@ -37,8 +37,8 @@ services:
       - key: GOOGLE_CLIENT_ID
         sync: false # from Google Cloud Console -- not secret, but kept as an env var (not hardcoded) so it's one place to rotate
       - key: GMAIL_USER
-        sync: false # a dedicated Gmail address (not a personal one) used only to send verification emails
-      - key: GMAIL_APP_PASSWORD
-        sync: false # that account's App Password (needs 2FA on to generate one) -- not its real login password
+        sync: false # the from address on outgoing mail -- must be verified as a sender in Brevo
+      - key: BREVO_API_KEY
+        sync: false # Brevo transactional API key. HTTP, not SMTP: Render blocks outbound 25/465/587 on free instances, so an SMTP client can't get out at all
       - key: WEB_APP_URL
         sync: false # https://current.onrender.com -- used to build the verification email's link and to redirect back after verifying

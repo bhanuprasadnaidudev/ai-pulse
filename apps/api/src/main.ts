@@ -12,8 +12,9 @@ import { logMissingConfig } from './config-check.js';
 // pre-17 behaviour for every outbound connection that goes through
 // dns.lookup: the feed fetches, Gemini, the database.
 //
-// Not SMTP, though -- nodemailer resolves hostnames itself and never
-// calls dns.lookup, so it needs its own fix. See MailService.
+// Mail no longer needs this: it goes out over Brevo's HTTPS API
+// rather than SMTP, because Render blocks the SMTP ports outright on
+// free instances. See MailService.
 dns.setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {
