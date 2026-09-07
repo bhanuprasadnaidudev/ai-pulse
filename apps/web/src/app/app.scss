@@ -51,6 +51,13 @@ $anim: 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
+  // Without this the flex row squeezed .logo down to 12px in the collapsed
+  // rail while the mark inside stayed 22px -- and overflow: hidden then
+  // sliced the mark in half, cutting the right end off its baseline so it
+  // read as an L rather than a marker on a timeline. flex-shrink: 0 on the
+  // mark alone wasn't enough: it stopped the SVG shrinking but not its
+  // parent, which is what does the clipping.
+  flex-shrink: 0;
 }
 
 // Stays put when the sidebar collapses -- the wordmark beside it is what
@@ -60,6 +67,28 @@ $anim: 0.2s ease;
   height: 22px;
   flex-shrink: 0;
   color: t.$acid;
+}
+
+// The collapsed rail leaves ~50px of usable width, and the mark (22), the
+// header gap and the toggle (28 by default) don't fit in it at normal
+// sizes. The budget below is exact: 22 + 4 + 22 = 48. Without it something
+// always lost -- first the mark was sliced in half, then the toggle
+// overflowed the rail's hidden overflow.
+.sidebar.collapsed {
+  // The wordmark collapses to zero width but .logo's own gap survives it,
+  // padding the box out to 30px and pushing the toggle off the edge.
+  .logo {
+    gap: 0;
+  }
+
+  .sidebar-header {
+    gap: 4px;
+  }
+
+  .collapse-toggle {
+    width: 22px;
+    height: 22px;
+  }
 }
 
 // Always in the DOM -- collapsing animates opacity/width instead of the
