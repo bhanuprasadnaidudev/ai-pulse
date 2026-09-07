@@ -16,6 +16,23 @@ function parseDateOrThrow(value: string, paramName: string): Date {
   return date;
 }
 
+/** Keyset pagination on (publishedAt, id), not publishedAt alone.
+ * Feeds routinely carry several items with an identical timestamp -- one
+ * publisher posting a batch, or a source whose RSS only gives a date --
+ * and `publishedAt < before` then either drops every tied row after the
+ * page boundary or repeats them on the next page. Neither shows up as an
+ * error; the reader just silently never sees those stories. The id
+ * tiebreak makes the boundary exact, provided the ORDER BY matches it. */
+function cursorWhere(before?: string, beforeId?: string): Prisma.PostWhereInput {
+  if (!before) return {};
+  const at = parseDateOrThrow(before, 'before');
+  if (!beforeId) return { publishedAt: { lt: at } };
+  return {
+    OR: [{ publishedAt: { lt: at } }, { publishedAt: at, id: { lt: beforeId } }],
+  };
+}
+
+const FEED_ORDER: Prisma.PostOrderByWithRelationInput[] = [{ publishedAt: 'desc' }, { id: 'desc' }];
 /** `source` is a comma-separated list from the query string -- multi-select
  * on the frontend's filter checkboxes. */
 function sourceWhere(source?: string): Prisma.PostWhereInput {
@@ -34,15 +51,15 @@ export class FeedService {
     private readonly explainer: ExplainerService,
   ) {}
 
-  async getFeed(before?: string, limit?: string, source?: string) {
+  async getFeed(before?: string, limit?: string, source?: string, beforeId?: string) {
     const take = limit ? Math.min(Math.max(parseInt(limit, 10) || DEFAULT_LIMIT, 1), MAX_LIMIT) : DEFAULT_LIMIT;
 
     return this.prisma.post.findMany({
       where: {
-        ...(before ? { publishedAt: { lt: parseDateOrThrow(before, 'before') } } : {}),
+        ...cursorWhere(before, beforeId),
         ...sourceWhere(source),
       },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: FEED_ORDER,
       take,
     });
   }
@@ -60,19 +77,27 @@ export class FeedService {
     });
   }
 
-  async search(q: string, before?: string, limit?: string, source?: string) {
+  async search(q: string, before?: string, limit?: string, source?: string, beforeId?: string) {
     const take = limit ? Math.min(Math.max(parseInt(limit, 10) || DEFAULT_LIMIT, 1), MAX_LIMIT) : DEFAULT_LIMIT;
 
     return this.prisma.post.findMany({
+      // AND, not a flat spread: cursorWhere also produces an OR (the
+      // publishedAt/id tiebreak), and a second OR key in the same object
+      // literal would overwrite the first -- dropping the cursor silently
+      // and making search paginate from the top every time.
       where: {
-        ...(before ? { publishedAt: { lt: parseDateOrThrow(before, 'before') } } : {}),
-        ...sourceWhere(source),
-        OR: [
-          { title: { contains: q, mode: Prisma.QueryMode.insensitive } },
-          { summary: { contains: q, mode: Prisma.QueryMode.insensitive } },
+        AND: [
+          cursorWhere(before, beforeId),
+          sourceWhere(source),
+          {
+            OR: [
+              { title: { contains: q, mode: Prisma.QueryMode.insensitive } },
+              { summary: { contains: q, mode: Prisma.QueryMode.insensitive } },
+            ],
+          },
         ],
       },
-      orderBy: { publishedAt: 'desc' },
+      orderBy: FEED_ORDER,
       take,
     });
   }

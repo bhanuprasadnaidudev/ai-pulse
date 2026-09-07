@@ -35,9 +35,13 @@ export interface TrendingPost {
 export class FeedService {
   constructor(private http: HttpClient) {}
 
-  getFeed(before?: string, limit = 20, sources?: string[]): Observable<FeedPost[]> {
+  /** `beforeId` is the second half of a keyset cursor. Paging on the
+   * timestamp alone loses posts whenever several share one, which happens
+   * constantly with feeds that only publish a date. */
+  getFeed(before?: string, limit = 20, sources?: string[], beforeId?: string): Observable<FeedPost[]> {
     let params = new HttpParams().set('limit', limit);
     if (before) params = params.set('before', before);
+    if (beforeId) params = params.set('beforeId', beforeId);
     if (sources?.length) params = params.set('source', sources.join(','));
     return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
   }
@@ -48,9 +52,10 @@ export class FeedService {
     return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
   }
 
-  search(q: string, before?: string, limit = 20, sources?: string[]): Observable<FeedPost[]> {
+  search(q: string, before?: string, limit = 20, sources?: string[], beforeId?: string): Observable<FeedPost[]> {
     let params = new HttpParams().set('q', q).set('limit', limit);
     if (before) params = params.set('before', before);
+    if (beforeId) params = params.set('beforeId', beforeId);
     if (sources?.length) params = params.set('source', sources.join(','));
     return this.http.get<FeedPost[]>(`${API_BASE_URL}/feed`, { params });
   }

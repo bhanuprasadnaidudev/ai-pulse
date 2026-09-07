@@ -140,14 +140,14 @@ export class FeedComponent implements OnInit, OnDestroy {
   /** Routes to the right endpoint for whichever filter mode is active.
    * Search and date-jump are mutually exclusive views; source narrows
    * whichever one is active. */
-  private fetchPage(before?: string): Observable<FeedPost[]> {
+  private fetchPage(before?: string, beforeId?: string): Observable<FeedPost[]> {
     const sources = this.activeSources();
     const query = this.activeQuery();
     const date = this.activeDate();
 
-    if (query) return this.feed.search(query, before, PAGE_SIZE, sources);
+    if (query) return this.feed.search(query, before, PAGE_SIZE, sources, beforeId);
     if (date) return this.feed.getByDate(date, sources);
-    return this.feed.getFeed(before, PAGE_SIZE, sources);
+    return this.feed.getFeed(before, PAGE_SIZE, sources, beforeId);
   }
 
   loadInitial() {
@@ -173,13 +173,16 @@ export class FeedComponent implements OnInit, OnDestroy {
    * not a manual button click. */
   loadMore() {
     if (this.loadingMore() || this.allLoaded() || this.loading()) return;
-    const oldest = this.posts().at(-1)?.publishedAt;
-    if (!oldest) return;
+    // Both halves of the cursor come from the same row, so the next page
+    // starts exactly where this one ended even when several posts share a
+    // publishedAt.
+    const last = this.posts().at(-1);
+    if (!last) return;
 
     this.loadingMore.set(true);
     this.loadMoreError.set(null);
     this.fetchSub?.unsubscribe();
-    this.fetchSub = this.fetchPage(oldest).subscribe({
+    this.fetchSub = this.fetchPage(last.publishedAt, last.id).subscribe({
       next: (more) => {
         this.posts.update((current) => [...current, ...more]);
         this.loadingMore.set(false);
