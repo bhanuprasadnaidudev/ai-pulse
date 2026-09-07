@@ -51,6 +51,8 @@
   section:first-of-type { page-break-before: avoid; }
   .lede { font-size: 11pt; color: var(--ink); border-left: 3px solid var(--acid); padding-left: 4mm; margin-bottom: 5mm; }
   .avoid { page-break-inside: avoid; }
+  h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
+  figure, .box, table, pre, .steps li { break-inside: avoid; }
 
   table { width: 100%; border-collapse: collapse; margin: 0 0 4mm; font-size: 9.2pt; page-break-inside: avoid; }
   th { text-align: left; background: var(--soft); color: var(--ink); font-size: 8.2pt; text-transform: uppercase; letter-spacing: .05em; padding: 2mm; border-bottom: 1.5px solid var(--rule); }
@@ -117,8 +119,10 @@
     <li><b>11 · Production failure log</b><span>Five real failures and their lessons</span></li>
     <li><b>12 · Limits and what comes next</b><span>Known edges</span></li>
   </ol>
+</section>
 
-  <h2 style="margin-top: 10mm;">1 · What Current is</h2>
+<section>
+  <h2>1 · What Current is</h2>
   <p class="lede">
     An AI news reader that does the filtering for you. It watches 43 sources, discards
     duplicates and off-topic noise, and has a language model write a short plain-English
