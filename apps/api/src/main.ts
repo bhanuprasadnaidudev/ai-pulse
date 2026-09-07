@@ -5,15 +5,15 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module.js';
 import { logMissingConfig } from './config-check.js';
 
-// Gmail's smtp.gmail.com resolves to both A and AAAA records, and since
-// Node 17 the default lookup order is "verbatim" -- whatever DNS returned
-// first, which is often the IPv6 one. Render's instances have no IPv6
-// route out, so those sends died with `connect ENETUNREACH 2607:f8b0:...`
-// before ever reaching Gmail. MailService catches and logs that (the send
-// is fire-and-forget, deliberately), so the user saw "check your email"
-// and no email ever arrived. Preferring A records restores the pre-17
-// behaviour for every outbound connection this process makes, so it
-// covers the feed fetches and API calls too, not just SMTP.
+// Render instances have no IPv6 route out, but since Node 17 the default
+// lookup order is "verbatim" -- whatever the resolver returned first,
+// which for a dual-stack host is often the AAAA record. Anything that
+// drew one failed with ENETUNREACH. Preferring A records restores the
+// pre-17 behaviour for every outbound connection that goes through
+// dns.lookup: the feed fetches, Gemini, the database.
+//
+// Not SMTP, though -- nodemailer resolves hostnames itself and never
+// calls dns.lookup, so it needs its own fix. See MailService.
 dns.setDefaultResultOrder('ipv4first');
 
 async function bootstrap() {

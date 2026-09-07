@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { promises as dns } from 'node:dns';
 import nodemailer from 'nodemailer';
 
 const logger = new Logger('MailService');
+
+const SMTP_HOST = 'smtp.gmail.com';
 
 // Gmail SMTP via a dedicated account's App Password, not a transactional-
 // email vendor (Resend/Brevo/SendGrid) -- researched and deliberate, not a
@@ -19,18 +22,55 @@ const logger = new Logger('MailService');
 // functional, and the actual price of staying free.
 @Injectable()
 export class MailService {
-  private readonly transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // STARTTLS on 587, not implicit TLS
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
+  private transporter: ReturnType<typeof nodemailer.createTransport> | null = null;
+
+  /** Nodemailer resolves the hostname itself -- dns.resolve4 and
+   * dns.resolve6, concatenated -- and then picks one of the results AT
+   * RANDOM (see formatDNSValue in nodemailer/shared). That is why setting
+   * Node's ipv4first lookup order wasn't enough: this path never calls
+   * dns.lookup, so the order setting has nothing to steer. Render
+   * instances have no IPv6 route out, so a send that drew Gmail's AAAA
+   * address died with `connect ENETUNREACH 2607:f8b0:...:587` -- and
+   * because the pick is random, it failed unpredictably rather than
+   * consistently, which is the worst way for this to break.
+   *
+   * Resolving an IPv4 address here and handing that over instead
+   * takes the coin flip out of it. tls.servername keeps the certificate
+   * validated against smtp.gmail.com rather than the bare IP, which is
+   * what makes passing an address safe. Built once and reused: Google's
+   * SMTP addresses rotate slowly, and a free Render instance restarts far
+   * more often than they do. */
+  private async getTransporter(): Promise<ReturnType<typeof nodemailer.createTransport>> {
+    if (this.transporter) return this.transporter;
+
+    // dns.lookup, not dns.resolve4: lookup goes through getaddrinfo and so
+    // honours the OS resolver, hosts file and search domains, and works in
+    // sandboxes where direct queries to port 53 are refused. If it fails
+    // anyway, fall back to the hostname -- that puts us back to the random
+    // pick, which at least sometimes works, rather than sending nothing.
+    let host = SMTP_HOST;
+    try {
+      host = (await dns.lookup(SMTP_HOST, { family: 4 })).address;
+    } catch (err) {
+      logger.warn(`Could not resolve an IPv4 address for ${SMTP_HOST}, falling back to the hostname: ${(err as Error).message}`);
+    }
+
+    this.transporter = nodemailer.createTransport({
+      host,
+      port: 587,
+      secure: false, // STARTTLS on 587, not implicit TLS
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+      tls: { servername: SMTP_HOST },
+    });
+    return this.transporter;
+  }
 
   async sendVerificationEmail(to: string, name: string, verifyUrl: string): Promise<void> {
-    await this.transporter.sendMail({
+    const transporter = await this.getTransporter();
+    await transporter.sendMail({
       from: `"Current" <${process.env.GMAIL_USER}>`,
       to,
       subject: 'Verify your email for Current',
@@ -66,7 +106,8 @@ export class MailService {
   }
 
   async sendPasswordResetEmail(to: string, name: string, resetUrl: string): Promise<void> {
-    await this.transporter.sendMail({
+    const transporter = await this.getTransporter();
+    await transporter.sendMail({
       from: `"Current" <${process.env.GMAIL_USER}>`,
       to,
       subject: 'Reset your Current password',
