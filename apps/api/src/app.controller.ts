@@ -1,4 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import { AppService } from './app.service.js';
 import { configStatus } from './config-check.js';
 import { GeminiQuotaService } from './gemini/gemini-quota.service.js';
@@ -42,5 +43,32 @@ export class AppController {
       // answerable without digging through logs.
       geminiToday: { used: await this.quota.used(), ...this.quota.limits },
     };
+  }
+  /** Whether the BREVO_API_KEY this instance is actually running with is
+   * one Brevo accepts. /health/config only reports that *a* value is set,
+   * which is why a stale key looked identical to a working one and cost us
+   * several rounds of "save it and try signing up again".
+   *
+   * The fingerprint is a truncated SHA-256, so two deploys can be compared
+   * against each other, or against a key held locally, without the value
+   * itself ever appearing in a response. */
+  @Get('health/mail')
+  async getMailHealth() {
+    const key = process.env.BREVO_API_KEY;
+    if (!key) return { ok: false, reason: 'BREVO_API_KEY is not set' };
+
+    const fingerprint = createHash('sha256').update(key).digest('hex').slice(0, 8);
+    try {
+      const res = await fetch('https://api.brevo.com/v3/account', {
+        headers: { 'api-key': key, accept: 'application/json' },
+      });
+      if (!res.ok) {
+        return { ok: false, fingerprint, status: res.status, reason: (await res.text()).slice(0, 200) };
+      }
+      const account = (await res.json()) as { email?: string };
+      return { ok: true, fingerprint, sender: account.email };
+    } catch (err) {
+      return { ok: false, fingerprint, reason: (err as Error).message };
+    }
   }
 }
