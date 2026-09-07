@@ -18,6 +18,31 @@ const RATE_LIMIT_MAX = 'rate-limit-max';
  * endpoint sharing the strictest one. */
 export const RateLimit = (max: number) => SetMetadata(RATE_LIMIT_MAX, max);
 
+/** The address to charge a request to.
+ *
+ * req.ip was wrong here, and silently so: Render fronts services with
+ * Cloudflare, so requests arrive having crossed more than the single hop
+ * `trust proxy: 1` accounts for. Express then resolved req.ip to an edge
+ * address that varies request to request, giving nearly every request its
+ * own fresh bucket -- 14 consecutive password-reset attempts went through
+ * unblocked against production. The limiter looked present in code review
+ * and did nothing at runtime, which is the worst way for a control like
+ * this to fail.
+ *
+ * cf-connecting-ip first, because Cloudflare overwrites it on the way in:
+ * a client cannot forge it. The leftmost X-Forwarded-For entry is the next
+ * best thing but IS client-supplied and therefore spoofable, so it is only
+ * a fallback for running somewhere without Cloudflare in front. */
+function clientKey(req: Request): string {
+  const cf = req.headers['cf-connecting-ip'];
+  if (typeof cf === 'string' && cf.trim()) return cf.trim();
+
+  const forwarded = req.headers['x-forwarded-for'];
+  const first = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0]?.trim();
+  if (first) return first;
+
+  return req.ip ?? 'unknown';
+}
 interface Bucket {
   count: number;
   resetAt: number;
@@ -49,7 +74,7 @@ export class RateLimitGuard implements CanActivate {
 
     // Keyed per endpoint as well as per client, so a burst of signups
     // can't lock the same person out of logging in.
-    const key = `${req.ip ?? 'unknown'}:${context.getHandler().name}`;
+    const key = `${clientKey(req)}:${context.getHandler().name}`;
 
     const max = this.reflector.get<number>(RATE_LIMIT_MAX, context.getHandler()) ?? MAX_REQUESTS_PER_WINDOW;
 

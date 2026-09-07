@@ -1,4 +1,5 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import { createHash } from 'node:crypto';
 import { AppService } from './app.service.js';
 import { apiPublicUrl, configStatus } from './config-check.js';
@@ -75,5 +76,20 @@ export class AppController {
     } catch (err) {
       return { ok: false, fingerprint, reason: (err as Error).message };
     }
+  }
+  /** What this instance resolves the caller to. Only ever reflects the
+   * requester back at themselves, so it exposes nothing they do not
+   * already know -- and it is the difference between "rate limiting is
+   * configured" and "rate limiting works", which cost a real production
+   * gap here: every request was landing in its own bucket. */
+  @Get('health/ip')
+  getIpHealth(@Req() req: Request) {
+    return {
+      resolvedKey: req.headers['cf-connecting-ip'] ?? req.ip,
+      expressIp: req.ip,
+      expressIps: req.ips,
+      cfConnectingIp: req.headers['cf-connecting-ip'] ?? null,
+      xForwardedFor: req.headers['x-forwarded-for'] ?? null,
+    };
   }
 }
