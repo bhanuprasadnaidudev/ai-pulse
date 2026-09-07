@@ -4,6 +4,7 @@ import { OAuth2Client, type TokenPayload } from 'google-auth-library';
 import { Prisma, type User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import crypto from 'node:crypto';
+import { apiPublicUrl } from '../config-check.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MailService } from './mail.service.js';
 import {
@@ -173,7 +174,7 @@ export class AuthService {
     // the send is *initiated*, not when it completes. sendVerificationEmailSafely
     // already catches and logs its own errors, so nothing here needs a
     // .catch() to avoid an unhandled rejection.
-    const verifyUrl = `${process.env.WEB_APP_URL}/auth/verify?token=${token}`;
+    const verifyUrl = `${apiPublicUrl()}/auth/verify?token=${token}`;
     void this.mail.sendVerificationEmailSafely(email, name, verifyUrl);
   }
 
@@ -222,7 +223,7 @@ export class AuthService {
 
       // Not awaited -- same reasoning as signup(): the response doesn't
       // need to wait out a slow SMTP round-trip.
-      const verifyUrl = `${process.env.WEB_APP_URL}/auth/verify?token=${token}`;
+      const verifyUrl = `${apiPublicUrl()}/auth/verify?token=${token}`;
       void this.mail.sendVerificationEmailSafely(email, user.name, verifyUrl);
     } catch {
       // Swallowed deliberately -- see the doc comment above.

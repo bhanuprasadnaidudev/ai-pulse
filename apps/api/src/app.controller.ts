@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { AppService } from './app.service.js';
-import { configStatus } from './config-check.js';
+import { apiPublicUrl, configStatus } from './config-check.js';
 import { GeminiQuotaService } from './gemini/gemini-quota.service.js';
 
 @Controller()
@@ -39,6 +39,11 @@ export class AppController {
       // answered from the dashboard, and a fix that has not shipped looks
       // exactly like a fix that did not work.
       commit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? 'local',
+      // The base the verification link is built from. It has to be the API's
+      // own origin -- the web app has no /auth/verify route, so a link built
+      // from WEB_APP_URL lands on the SPA, matches nothing, and silently drops
+      // the token instead of consuming it.
+      verifyLinkBase: apiPublicUrl(),
       // Today's Gemini spend, so "is the feed about to stop updating?" is
       // answerable without digging through logs.
       geminiToday: { used: await this.quota.used(), ...this.quota.limits },

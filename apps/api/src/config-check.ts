@@ -11,6 +11,15 @@ const REQUIRED_ENV = [
   ['BREVO_API_KEY', 'sending verification and password-reset emails'],
 ] as const;
 
+/** The API's own public origin, for links that must land on the API
+ * rather than the web app. Render sets RENDER_EXTERNAL_URL on every web
+ * service, so this needs no configuration in the dashboard;
+ * API_PUBLIC_URL overrides it for a custom domain, and the localhost
+ * fallback is what `npm run start:dev` uses. */
+export function apiPublicUrl(): string {
+  return process.env.API_PUBLIC_URL ?? process.env.RENDER_EXTERNAL_URL ?? 'http://localhost:3000';
+}
+
 export type ConfigStatus = Record<string, boolean>;
 
 /** Booleans only, never values -- safe to expose. Lets a misconfiguration
