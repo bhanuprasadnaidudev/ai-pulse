@@ -97,12 +97,12 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: t.$space-md;
-  // Cards stretch to a shared height per row (grid's default) rather than
-  // each sitting at its natural height -- otherwise every row ends in a
-  // ragged line of mismatched bottom edges with dead space under the
-  // shorter cards. The meta row inside each card is pushed to the bottom
-  // (below) so the timestamps and actions line up across the row too.
-  align-items: stretch;
+  // Each card keeps its own height instead of stretching to match the
+  // tallest in its row: a short summary next to a long one was being
+  // padded out with dead space to match, which read as a fixed card
+  // height. Rows can end unevenly -- that's the intended masonry-ish
+  // look, and only the flow direction (left-to-right) was ever the bug.
+  align-items: start;
 
   @media (min-width: 700px) {
     grid-template-columns: repeat(2, 1fr);
@@ -135,14 +135,9 @@
   padding: 16px;
   // No margin-bottom / break-inside any more -- the grid's own `gap`
   // spaces these now, and there are no columns left to break out of.
-  height: 100%; // fill the row's shared height, so bottom edges line up
-
-  // Timestamp + save + "read more" sit on the card's bottom edge rather
-  // than floating right under a short summary, so they line up across the
-  // row instead of stepping up and down with each card's text length.
-  .card-meta {
-    margin-top: auto;
-  }
+  // No height: 100% either: the card ends where its content ends, so the
+  // meta row sits directly under the summary rather than being pushed to
+  // the bottom of a stretched box.
 
   transition:
     transform 0.15s ease,
