@@ -3,6 +3,46 @@
 $sidebar-width: 220px;
 $sidebar-width-collapsed: 72px;
 $anim: 0.2s ease;
+// Below this, the full-width sidebar is no longer viable: at 375px it took
+// 59% of the screen, leaving headlines 99px wide and pushing the page into
+// horizontal overflow.
+$mobile: 700px;
+
+/** The narrow icon rail. Shared by the explicit collapse toggle and by the
+ * mobile breakpoint, which forces it regardless of the toggle -- so the two
+ * can't drift apart. */
+@mixin rail-mode {
+  width: $sidebar-width-collapsed;
+  padding-inline: t.$space-sm;
+
+  .logo {
+    gap: 0;
+  }
+
+  .logo-full {
+    opacity: 0;
+    max-width: 0;
+    padding-inline: 0;
+    margin: 0;
+  }
+
+  .nav-label {
+    opacity: 0;
+    max-width: 0;
+    margin: 0;
+  }
+
+  // The rail leaves ~50px of usable width; 22 + 4 + 22 = 48 fits, and
+  // anything larger clips either the logo or the toggle.
+  .sidebar-header {
+    gap: 4px;
+  }
+
+  .collapse-toggle {
+    width: 22px;
+    height: 22px;
+  }
+}
 
 .shell {
   min-height: 100dvh;
@@ -30,8 +70,7 @@ $anim: 0.2s ease;
   overflow: hidden;
 
   &.collapsed {
-    width: $sidebar-width-collapsed;
-    padding-inline: t.$space-sm;
+    @include rail-mode;
   }
 }
 
@@ -67,27 +106,30 @@ $anim: 0.2s ease;
   height: 22px;
   flex-shrink: 0;
   color: t.$acid;
+  // A slow "live" pulse, the way a recording indicator breathes. Bottoms
+  // out at 0.55 rather than 0 deliberately: a dot that vanishes completely
+  // reads as a rendering glitch, and it draws the eye far harder than an
+  // ambient status light should.
+  animation: logo-pulse 2.4s ease-in-out infinite;
 }
 
-// The collapsed rail leaves ~50px of usable width, and the mark (22), the
-// header gap and the toggle (28 by default) don't fit in it at normal
-// sizes. The budget below is exact: 22 + 4 + 22 = 48. Without it something
-// always lost -- first the mark was sliced in half, then the toggle
-// overflowed the rail's hidden overflow.
-.sidebar.collapsed {
-  // The wordmark collapses to zero width but .logo's own gap survives it,
-  // padding the box out to 30px and pushing the toggle off the edge.
-  .logo {
-    gap: 0;
+@keyframes logo-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
-
-  .sidebar-header {
-    gap: 4px;
+  50% {
+    opacity: 0.55;
+    transform: scale(0.86);
   }
+}
 
-  .collapse-toggle {
-    width: 22px;
-    height: 22px;
+// A permanently animating element is exactly what this setting exists to
+// stop; the dot stays, it just holds still.
+@media (prefers-reduced-motion: reduce) {
+  .logo-mark {
+    animation: none;
   }
 }
 
@@ -108,12 +150,6 @@ $anim: 0.2s ease;
     margin $anim;
 }
 
-.sidebar.collapsed .logo-full {
-  opacity: 0;
-  max-width: 0;
-  padding-inline: 0;
-  margin: 0;
-}
 
 .collapse-toggle {
   border: t.$border;
@@ -171,11 +207,6 @@ $anim: 0.2s ease;
     margin $anim;
 }
 
-.sidebar.collapsed .nav-label {
-  opacity: 0;
-  max-width: 0;
-  margin: 0;
-}
 
 .nav-avatar {
   width: 18px;
@@ -337,4 +368,33 @@ $anim: 0.2s ease;
   position: fixed;
   bottom: t.$space-lg;
   right: t.$space-lg;
+}
+
+// ---------------------------------------------------------------
+// Phones. The sidebar is forced into the icon rail here regardless of the
+// collapse toggle: at 375px the full-width version took 59% of the screen,
+// left headlines 99px wide, and pushed the page into horizontal overflow.
+// The toggle is hidden with it, since it would have nothing left to do.
+// ---------------------------------------------------------------
+@media (max-width: $mobile) {
+  .sidebar {
+    @include rail-mode;
+  }
+
+  .collapse-toggle {
+    display: none;
+  }
+
+  .sidebar-header {
+    justify-content: center;
+  }
+
+  .content {
+    padding: t.$space-sm;
+  }
+
+  .chat-fab {
+    bottom: t.$space-sm;
+    right: t.$space-sm;
+  }
 }

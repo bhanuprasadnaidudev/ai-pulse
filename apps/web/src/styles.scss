@@ -96,6 +96,20 @@ textarea {
   color-scheme: dark;
 }
 
+// Set on <html> while the post detail modal is open. Applied to both html
+// and body because either can be the scrolling element depending on the
+// layout mode, and locking only one leaves the page scrolling behind the
+// modal. scrollbar-gutter keeps the layout from shifting sideways as the
+// scrollbar disappears.
+html.modal-open,
+html.modal-open body {
+  overflow: hidden;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
 // Toggled on <html> by FeedComponent when the user picks "one at a time" —
 // lives here (unscoped) rather than in a component stylesheet because
 // Angular's emulated encapsulation would scope a selector like this to the
