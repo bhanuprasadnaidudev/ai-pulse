@@ -33,6 +33,11 @@ export class AppController {
       ok: missing.length === 0,
       missing,
       config,
+      // Which commit is actually serving. Render injects RENDER_GIT_COMMIT
+      // at build time; without it, "did my fix deploy yet?" can only be
+      // answered from the dashboard, and a fix that has not shipped looks
+      // exactly like a fix that did not work.
+      commit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? 'local',
       // Today's Gemini spend, so "is the feed about to stop updating?" is
       // answerable without digging through logs.
       geminiToday: { used: await this.quota.used(), ...this.quota.limits },
