@@ -13,7 +13,7 @@ export interface RawFeedItem {
 /** Several publishers reject requests without a plausible User-Agent
  * (rss-parser's default gets 403s from a few), and a contact URL is the
  * polite convention for a bot that fetches on a schedule. */
-const USER_AGENT = 'Mozilla/5.0 (compatible; CurrentBot/1.0; +https://current.onrender.com)';
+const USER_AGENT = 'Mozilla/5.0 (compatible; CurrentBot/1.0; +https://current-3wkv.onrender.com)';
 
 const DEFAULT_MAX_PER_RUN = 10;
 /** Below this, whatever came back isn't a usable headline -- aggregators

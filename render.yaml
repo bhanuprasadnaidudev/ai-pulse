@@ -41,4 +41,4 @@ services:
       - key: BREVO_API_KEY
         sync: false # Brevo transactional API key. HTTP, not SMTP: Render blocks outbound 25/465/587 on free instances, so an SMTP client can't get out at all
       - key: WEB_APP_URL
-        sync: false # https://current.onrender.com -- used to build the verification email's link and to redirect back after verifying
+        sync: false # https://current-3wkv.onrender.com -- used to build the verification email's link and to redirect back after verifying
